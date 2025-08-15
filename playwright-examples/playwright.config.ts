@@ -32,43 +32,43 @@ export default defineConfig({
     // Setup project
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
 
-    // Private projects
+    // Private projects (require authentication)
     {
-      name: 'chromium',
+      name: 'chromium-private',
       testMatch: /.*\/private\/.*\.spec\.ts$/,
       use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user.json' },
       dependencies: ['setup'],
     },
 
     {
-      name: 'firefox',
+      name: 'firefox-private',
       testMatch: /.*\/private\/.*\.spec\.ts$/,
       use: { ...devices['Desktop Firefox'], storageState: 'playwright/.auth/user.json' },
       dependencies: ['setup'],
     },
 
     {
-      name: 'webkit',
+      name: 'webkit-private',
       testMatch: /.*\/private\/.*\.spec\.ts$/,
       use: { ...devices['Desktop Safari'], storageState: 'playwright/.auth/user.json' },
       dependencies: ['setup'],
     },
 
-    // Public projects
+    // Public projects (no authentication required)
     {
-      name: 'chromium',
+      name: 'chromium-public',
       testMatch: /.*\/public\/.*\.spec\.ts$/,
       use: { ...devices['Desktop Chrome'] },
     },
 
     {
-      name: 'firefox',
+      name: 'firefox-public',
       testMatch: /.*\/public\/.*\.spec\.ts$/,
       use: { ...devices['Desktop Firefox'] },
     },
 
     {
-      name: 'webkit',
+      name: 'webkit-public',
       testMatch: /.*\/public\/.*\.spec\.ts$/,
       use: { ...devices['Desktop Safari'] },
     },
