@@ -1,21 +1,22 @@
-import { test as setup, expect } from '@playwright/test';
-import { SELECTORS, PATHS, MATCHERS, CREDENTIALS } from '@/tests/constants';
+import { test as setup } from '@playwright/test';
+import { LoginPage } from '@/tests/pages/login/LoginPage';
+import { SELECTORS, TIMEOUTS, AUTH_PATHS, WAIT_STATES } from '@/tests/constants';
 
 setup('authenticate', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+
   // Navigate to login page
-  await page.goto(PATHS.ROOT);
+  await loginPage.goto();
 
-  // Use credentials directly
-  const authConfig = CREDENTIALS.STANDARD_USER;
+  // Wait for page to load
+  await page.waitForLoadState(WAIT_STATES.NETWORK_IDLE);
 
-  // Login with credentials
-  await page.locator(SELECTORS.USERNAME).fill(authConfig.username);
-  await page.locator(SELECTORS.PASSWORD).fill(authConfig.password);
-  await page.locator(SELECTORS.LOGIN_BUTTON).click();
-
-  // Wait for successful login and verify we're on the inventory page
-  await expect(page).toHaveURL(MATCHERS.INVENTORY);
+  // Login with credentials using LoginPage
+  await loginPage.loginAsStandardUser();
+  await page.waitForLoadState(WAIT_STATES.NETWORK_IDLE);
+  await page.waitForSelector(SELECTORS.INVENTORY_LIST, { timeout: TIMEOUTS.SELECTOR });
+  await page.waitForTimeout(TIMEOUTS.ADDITIONAL_WAIT);
 
   // Save authentication state for private tests
-  await page.context().storageState({ path: 'playwright/.auth/user.json' });
+  await page.context().storageState({ path: AUTH_PATHS.USER_STORAGE });
 });
