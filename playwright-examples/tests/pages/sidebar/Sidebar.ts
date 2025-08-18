@@ -1,40 +1,26 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { SELECTORS } from '@/tests/constants/selectors';
+import { TEXTS } from '@/tests/constants/texts';
 
 export class Sidebar {
   private readonly page: Page;
+  readonly menuButton: Locator;
+  readonly closeButton: Locator;
+  readonly sidebarMenu: Locator;
+  readonly allItemsLink: Locator;
+  readonly aboutLink: Locator;
+  readonly logoutLink: Locator;
+  readonly resetAppStateLink: Locator;
 
   constructor(page: Page) {
     this.page = page;
-  }
-
-  // Locators
-  get menuButton(): Locator {
-    return this.page.locator(SELECTORS.MENU_BUTTON);
-  }
-
-  get closeButton(): Locator {
-    return this.page.locator(SELECTORS.CLOSE_BUTTON);
-  }
-
-  get sidebarMenu(): Locator {
-    return this.page.locator(SELECTORS.SIDEBAR_MENU);
-  }
-
-  get allItemsLink(): Locator {
-    return this.page.locator(SELECTORS.ALL_ITEMS_LINK);
-  }
-
-  get aboutLink(): Locator {
-    return this.page.locator(SELECTORS.ABOUT_LINK);
-  }
-
-  get logoutLink(): Locator {
-    return this.page.locator(SELECTORS.LOGOUT_LINK);
-  }
-
-  get resetAppStateLink(): Locator {
-    return this.page.locator(SELECTORS.RESET_APP_STATE_LINK);
+    this.menuButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.OPEN_MENU });
+    this.closeButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.CLOSE_MENU });
+    this.sidebarMenu = this.page.locator(SELECTORS.SIDEBAR_MENU);
+    this.allItemsLink = this.page.getByRole('link', { name: TEXTS.LINKS.ALL_ITEMS });
+    this.aboutLink = this.page.getByRole('link', { name: TEXTS.LINKS.ABOUT });
+    this.logoutLink = this.page.getByRole('link', { name: TEXTS.LINKS.LOGOUT });
+    this.resetAppStateLink = this.page.getByRole('link', { name: TEXTS.LINKS.RESET_APP_STATE });
   }
 
   // Actions
