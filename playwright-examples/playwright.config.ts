@@ -36,21 +36,30 @@ export default defineConfig({
     {
       name: 'chromium-private',
       testMatch: /.*\/private\/.*\.spec\.ts$/,
-      use: { ...devices['Desktop Chrome'], storageState: 'playwright/.auth/user.json' },
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/user.json',
+      },
       dependencies: ['setup'],
     },
 
     {
       name: 'firefox-private',
       testMatch: /.*\/private\/.*\.spec\.ts$/,
-      use: { ...devices['Desktop Firefox'], storageState: 'playwright/.auth/user.json' },
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+      },
       dependencies: ['setup'],
     },
 
     {
       name: 'webkit-private',
       testMatch: /.*\/private\/.*\.spec\.ts$/,
-      use: { ...devices['Desktop Safari'], storageState: 'playwright/.auth/user.json' },
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: 'playwright/.auth/user.json',
+      },
       dependencies: ['setup'],
     },
 
