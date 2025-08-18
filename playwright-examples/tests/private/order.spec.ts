@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { HomePage } from '@/tests/pages/home/HomePage';
-import { CartPage } from '@/tests/pages/cart/CartPage';
-import { OrderPage } from '@/tests/pages/order/OrderPage';
-import { loginAsStandardUser } from '@/tests/utils/auth';
+import { CartPage, HomePage, OrderPage } from '@/tests/pages/index';
 import { createOrderTestHelpers } from '@/tests/utils/order-test-helpers';
 import {
   ERROR_MESSAGES,
@@ -25,152 +22,167 @@ test.describe('Order Functionality', () => {
     cartPage = new CartPage(page);
     orderPage = new OrderPage(page);
     helpers = createOrderTestHelpers(homePage, cartPage, orderPage);
-
-    // Login with standard account as precondition
-    await loginAsStandardUser(page);
+    await page.goto(URLS.INVENTORY);
     await homePage.waitForLoaded();
   });
 
   test('Successful Checkout - Verify that the user can check out successfully with products added to the cart', async ({
     page,
   }) => {
-    // Setup: Add products and navigate to checkout
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT]);
+    await test.step('Setup: Add products and navigate to checkout', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT]);
+    });
 
-    // Complete checkout process
-    await helpers.completeCheckoutProcess();
-    await helpers.verifySuccessfulCheckout();
+    await test.step('Complete checkout process', async () => {
+      await helpers.completeCheckoutProcess();
+      await helpers.verifySuccessfulCheckout();
+    });
 
-    // Go back to home and verify cart is empty
-    await orderPage.backToHome();
-    await expect(page).toHaveURL(MATCHERS.INVENTORY);
-    await helpers.verifyCartIsEmpty();
+    await test.step('Go back to home and verify cart is empty', async () => {
+      await orderPage.backToHome();
+      await expect(page).toHaveURL(MATCHERS.INVENTORY);
+      await helpers.verifyCartIsEmpty();
+    });
   });
 
   test('Checkout with Empty Inputs - Verify that the user cannot check out with empty inputs', async () => {
-    // Setup: Add products and navigate to checkout
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT]);
+    await test.step('Setup: Add products and navigate to checkout', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT]);
+    });
 
-    // Try to continue without filling form
-    await orderPage.continueToOverview();
+    await test.step('Try to continue without filling form', async () => {
+      await orderPage.continueToOverview();
+    });
 
-    // Verify error state
-    await orderPage.verifyCurrentUrl(URLS.CHECKOUT_STEP_ONE);
-    await orderPage.verifyPageTitle(TEXTS.TITLES.CHECKOUT_INFORMATION);
-    await helpers.verifyFormValidationError(ERROR_MESSAGES.FIRST_NAME_REQUIRED);
+    await test.step('Verify error state', async () => {
+      await orderPage.verifyCurrentUrl(URLS.CHECKOUT_STEP_ONE);
+      await orderPage.verifyPageTitle(TEXTS.TITLES.CHECKOUT_INFORMATION);
+      await helpers.verifyFormValidationError(ERROR_MESSAGES.FIRST_NAME_REQUIRED);
+    });
   });
 
   test('should verify checkout information form validation - empty first name', async () => {
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
-    await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.EMPTY_FIRST_NAME);
-    await orderPage.continueToOverview();
-    await helpers.verifyFormValidationError(ERROR_MESSAGES.FIRST_NAME_REQUIRED);
+    await test.step('Fill with empty first name and try to continue', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+      await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.EMPTY_FIRST_NAME);
+      await orderPage.continueToOverview();
+    });
+
+    await test.step('Verify first name required error', async () => {
+      await helpers.verifyFormValidationError(ERROR_MESSAGES.FIRST_NAME_REQUIRED);
+    });
   });
 
   test('should verify checkout information form validation - empty last name', async () => {
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
-    await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.EMPTY_LAST_NAME);
-    await orderPage.continueToOverview();
-    await helpers.verifyFormValidationError(ERROR_MESSAGES.LAST_NAME_REQUIRED);
+    await test.step('Fill with empty last name and try to continue', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+      await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.EMPTY_LAST_NAME);
+      await orderPage.continueToOverview();
+    });
+
+    await test.step('Verify last name required error', async () => {
+      await helpers.verifyFormValidationError(ERROR_MESSAGES.LAST_NAME_REQUIRED);
+    });
   });
 
   test('should verify checkout information form validation - empty zip code', async () => {
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
-    await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.EMPTY_ZIP_CODE);
-    await orderPage.continueToOverview();
-    await helpers.verifyFormValidationError(ERROR_MESSAGES.POSTAL_CODE_REQUIRED);
+    await test.step('Fill with empty zip code and try to continue', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+      await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.EMPTY_ZIP_CODE);
+      await orderPage.continueToOverview();
+    });
+
+    await test.step('Verify postal code required error', async () => {
+      await helpers.verifyFormValidationError(ERROR_MESSAGES.POSTAL_CODE_REQUIRED);
+    });
   });
 
   test('should verify checkout overview page displays correct information', async () => {
     const products = [PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT];
-    await helpers.setupCheckoutWithProducts(products);
-    await helpers.completeCheckoutToOverview();
 
-    // Verify overview page
-    await orderPage.verifyCheckoutStepTwoPage();
-    await orderPage.verifyCartItemsInOverview(products);
-    await orderPage.verifySummaryInformation();
+    await test.step('Setup and complete checkout to overview', async () => {
+      await helpers.setupCheckoutWithProducts(products);
+      await helpers.completeCheckoutToOverview();
+    });
 
-    // Verify buttons are present
-    await expect(orderPage.finishButton).toBeVisible();
-    await expect(orderPage.cancelOverviewButton).toBeVisible();
-  });
-
-  test('should verify checkout complete page displays success message', async () => {
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
-    await helpers.completeCheckoutProcess();
-    await helpers.verifySuccessfulCheckout();
-  });
-
-  test('should verify cart is cleared after successful checkout', async ({ page }) => {
-    const products = [PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT];
-    await helpers.addProductsToCart(products);
-    await expect(homePage.cartBadge()).toHaveText('2');
-
-    await helpers.navigateToCheckout();
-    await helpers.completeCheckoutProcess();
-    await orderPage.backToHome();
-
-    // Verify cart is empty
-    await expect(page).toHaveURL(MATCHERS.INVENTORY);
-    await helpers.verifyCartIsEmpty();
+    await test.step('Verify overview page', async () => {
+      await orderPage.verifyCheckoutStepTwoPage();
+      await orderPage.verifyCartItemsInOverview(products);
+      await orderPage.verifySummaryInformation();
+      await expect(orderPage.finishButton).toBeVisible();
+      await expect(orderPage.cancelOverviewButton).toBeVisible();
+    });
   });
 
   test('should verify cancel button functionality in checkout step one', async ({ page }) => {
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
-    await orderPage.verifyCheckoutStepOnePage();
-    await orderPage.cancelCheckout();
+    await test.step('Setup checkout and cancel at step one', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+      await orderPage.verifyCheckoutStepOnePage();
+      await orderPage.cancelCheckout();
+    });
 
-    // Verify we're back to cart page
-    await expect(page).toHaveURL(MATCHERS.CART);
-    await expect(page.locator('.title')).toHaveText(TEXTS.TITLES.YOUR_CART);
-    await expect(homePage.cartBadge()).toHaveText('1');
+    await test.step('Verify we are back to cart page', async () => {
+      await expect(page).toHaveURL(MATCHERS.CART);
+      await expect(page.locator('.title')).toHaveText(TEXTS.TITLES.YOUR_CART);
+      await expect(homePage.cartBadge()).toHaveText('1');
+    });
   });
 
   test('should verify cancel button functionality in checkout overview', async ({ page }) => {
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
-    await helpers.completeCheckoutToOverview();
-    await orderPage.verifyCheckoutStepTwoPage();
-    await orderPage.cancelOverview();
+    await test.step('Setup checkout and cancel at overview', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+      await helpers.completeCheckoutToOverview();
+      await orderPage.verifyCheckoutStepTwoPage();
+      await orderPage.cancelOverview();
+    });
 
-    // Verify we're back to inventory page
-    await expect(page).toHaveURL(MATCHERS.INVENTORY);
-    await expect(page.locator('.title')).toHaveText(TEXTS.TITLES.PRODUCTS);
-    await expect(homePage.cartBadge()).toHaveText('1');
+    await test.step('Verify we are back to inventory page', async () => {
+      await expect(page).toHaveURL(MATCHERS.INVENTORY);
+      await expect(page.locator('.title')).toHaveText(TEXTS.TITLES.PRODUCTS);
+      await expect(homePage.cartBadge()).toHaveText('1');
+    });
   });
 
   test('should verify form fields are properly filled and validated', async () => {
-    await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+    await test.step('Verify form is initially empty', async () => {
+      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+      await orderPage.verifyFormFieldsEmpty();
+    });
 
-    // Verify form fields are initially empty
-    await orderPage.verifyFormFieldsEmpty();
+    await test.step('Fill with valid data and verify', async () => {
+      await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.VALID);
+      await orderPage.verifyFormFieldsFilledWithData(TEST_USER_DATA.VALID);
+    });
 
-    // Fill and verify form
-    await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.VALID);
-    await orderPage.verifyFormFieldsFilledWithData(TEST_USER_DATA.VALID);
-
-    await orderPage.continueToOverview();
-    await orderPage.verifyCheckoutStepTwoPage();
+    await test.step('Continue to overview and verify step two page', async () => {
+      await orderPage.continueToOverview();
+      await orderPage.verifyCheckoutStepTwoPage();
+    });
   });
 
   test('should verify multiple items checkout with correct pricing', async () => {
     const products = [PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT, PRODUCT_DATA.T_SHIRT];
-    await helpers.setupCheckoutWithProducts(products);
-    await helpers.completeCheckoutToOverview();
 
-    // Verify items and pricing
-    await orderPage.verifyCartItemsInOverview(products);
-    await orderPage.verifySummaryInformation();
+    await test.step('Setup and complete checkout to overview', async () => {
+      await helpers.setupCheckoutWithProducts(products);
+      await helpers.completeCheckoutToOverview();
+    });
 
-    const tax = await orderPage.getTaxAmount();
-    const total = await orderPage.getTotalAmount();
+    await test.step('Verify items and pricing', async () => {
+      await orderPage.verifyCartItemsInOverview(products);
+      await orderPage.verifySummaryInformation();
 
-    // Verify pricing
-    await orderPage.verifyExpectedSubtotal(EXPECTED_SUBTOTALS.THREE_ITEMS);
-    expect(tax).toBeTruthy();
-    expect(total).toBeTruthy();
+      const tax = await orderPage.getTaxAmount();
+      const total = await orderPage.getTotalAmount();
 
-    await orderPage.finishOrder();
-    await orderPage.verifyCheckoutCompletePage();
+      await orderPage.verifyExpectedSubtotal(EXPECTED_SUBTOTALS.THREE_ITEMS);
+      expect(tax).toBeTruthy();
+      expect(total).toBeTruthy();
+    });
+
+    await test.step('Finish order and verify checkout complete', async () => {
+      await orderPage.finishOrder();
+      await orderPage.verifyCheckoutCompletePage();
+    });
   });
 });

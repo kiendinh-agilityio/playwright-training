@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { SELECTORS } from '@/tests/constants/selectors';
 import { URLS } from '@/tests/constants/routes';
-import { TEXTS } from '@/tests/constants/texts';
+import { TEXTS, TEST_IDS } from '@/tests/constants';
 
 export interface CheckoutData {
   firstName: string;
@@ -11,89 +11,47 @@ export interface CheckoutData {
 
 export class OrderPage {
   private readonly page: Page;
+  readonly firstNameInput: Locator;
+  readonly lastNameInput: Locator;
+  readonly zipCodeInput: Locator;
+  readonly continueButton: Locator;
+  readonly cancelButton: Locator;
+  readonly errorMessage: Locator;
+  readonly errorIcons: Locator;
+  readonly pageTitle: Locator;
+  readonly cartItems: Locator;
+  readonly subtotalLabel: Locator;
+  readonly taxLabel: Locator;
+  readonly totalLabel: Locator;
+  readonly finishButton: Locator;
+  readonly cancelOverviewButton: Locator;
+  readonly completeHeader: Locator;
+  readonly completeText: Locator;
+  readonly backHomeButton: Locator;
+  readonly ponyExpressImage: Locator;
+  readonly cartBadge: Locator;
 
   constructor(page: Page) {
     this.page = page;
-  }
-
-  // Checkout Step One - Your Information Page
-  get firstNameInput(): Locator {
-    return this.page.locator(SELECTORS.FIRST_NAME);
-  }
-
-  get lastNameInput(): Locator {
-    return this.page.locator(SELECTORS.LAST_NAME);
-  }
-
-  get zipCodeInput(): Locator {
-    return this.page.locator(SELECTORS.POSTAL_CODE);
-  }
-
-  get continueButton(): Locator {
-    return this.page.getByRole('button', { name: TEXTS.BUTTONS.CONTINUE });
-  }
-
-  get cancelButton(): Locator {
-    return this.page.getByRole('button', { name: TEXTS.BUTTONS.CANCEL });
-  }
-
-  get errorMessage(): Locator {
-    return this.page.locator(SELECTORS.ERROR_MESSAGE);
-  }
-
-  get errorIcons(): Locator {
-    return this.page.locator(SELECTORS.ERROR_ICON);
-  }
-
-  // Checkout Step Two - Overview Page
-  get pageTitle(): Locator {
-    return this.page.locator(SELECTORS.TITLE);
-  }
-
-  get cartItems(): Locator {
-    return this.page.locator(SELECTORS.CART_ITEM);
-  }
-
-  get subtotalLabel(): Locator {
-    return this.page.locator(SELECTORS.SUMMARY_SUBTOTAL);
-  }
-
-  get taxLabel(): Locator {
-    return this.page.locator(SELECTORS.SUMMARY_TAX);
-  }
-
-  get totalLabel(): Locator {
-    return this.page.locator(SELECTORS.SUMMARY_TOTAL);
-  }
-
-  get finishButton(): Locator {
-    return this.page.getByRole('button', { name: TEXTS.BUTTONS.FINISH });
-  }
-
-  get cancelOverviewButton(): Locator {
-    return this.page.getByRole('button', { name: TEXTS.BUTTONS.CANCEL });
-  }
-
-  // Checkout Complete Page
-  get completeHeader(): Locator {
-    return this.page.locator(SELECTORS.COMPLETE_HEADER);
-  }
-
-  get completeText(): Locator {
-    return this.page.locator(SELECTORS.COMPLETE_TEXT);
-  }
-
-  get backHomeButton(): Locator {
-    return this.page.getByRole('button', { name: TEXTS.BUTTONS.BACK_HOME });
-  }
-
-  get ponyExpressImage(): Locator {
-    return this.page.locator(SELECTORS.PONY_EXPRESS);
-  }
-
-  // Cart badge (for verification after checkout)
-  get cartBadge(): Locator {
-    return this.page.locator(SELECTORS.CART_BADGE);
+    this.firstNameInput = this.page.getByTestId(TEST_IDS.FIRST_NAME);
+    this.lastNameInput = this.page.getByTestId(TEST_IDS.LAST_NAME);
+    this.zipCodeInput = this.page.getByTestId(TEST_IDS.POSTAL_CODE);
+    this.continueButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.CONTINUE });
+    this.cancelButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.CANCEL });
+    this.errorMessage = this.page.getByTestId(TEST_IDS.ERROR);
+    this.errorIcons = this.page.locator(SELECTORS.ERROR_ICON);
+    this.pageTitle = this.page.locator(SELECTORS.TITLE);
+    this.cartItems = this.page.locator(SELECTORS.CART_ITEM);
+    this.subtotalLabel = this.page.locator(SELECTORS.SUMMARY_SUBTOTAL);
+    this.taxLabel = this.page.locator(SELECTORS.SUMMARY_TAX);
+    this.totalLabel = this.page.locator(SELECTORS.SUMMARY_TOTAL);
+    this.finishButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.FINISH });
+    this.cancelOverviewButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.CANCEL });
+    this.completeHeader = this.page.locator(SELECTORS.COMPLETE_HEADER);
+    this.completeText = this.page.locator(SELECTORS.COMPLETE_TEXT);
+    this.backHomeButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.BACK_HOME });
+    this.ponyExpressImage = this.page.locator(SELECTORS.PONY_EXPRESS);
+    this.cartBadge = this.page.locator(SELECTORS.CART_BADGE);
   }
 
   // Navigation methods
@@ -181,11 +139,11 @@ export class OrderPage {
   }
 
   async verifyCompleteHeader(expectedText: string): Promise<void> {
-    await expect(this.completeHeader).toHaveText(expectedText);
+    await expect(this.page.getByText(expectedText, { exact: true })).toBeVisible();
   }
 
   async verifyCompleteText(expectedText: string): Promise<void> {
-    await expect(this.completeText).toHaveText(expectedText);
+    await expect(this.page.getByText(expectedText, { exact: true })).toBeVisible();
   }
 
   async verifyCartBadgeNotVisible(): Promise<void> {
@@ -232,16 +190,14 @@ export class OrderPage {
     await expect(this.cartItems).toHaveCount(expectedItems.length);
 
     for (const itemName of expectedItems) {
-      await expect(
-        this.page.locator('.cart_item').filter({ has: this.page.getByText(itemName) }),
-      ).toBeVisible();
+      await expect(this.cartItems.filter({ has: this.page.getByText(itemName) })).toBeVisible();
     }
   }
 
   async verifySummaryInformation(): Promise<void> {
-    await expect(this.subtotalLabel).toBeVisible();
-    await expect(this.taxLabel).toBeVisible();
-    await expect(this.totalLabel).toBeVisible();
+    await expect(this.page.getByText(TEXTS.SUMMARY_LABELS.ITEM_TOTAL_VISIBLE)).toBeVisible();
+    await expect(this.page.getByText(TEXTS.SUMMARY_LABELS.TAX_VISIBLE)).toBeVisible();
+    await expect(this.page.getByText(TEXTS.SUMMARY_LABELS.TOTAL_VISIBLE)).toBeVisible();
   }
 
   async verifyPonyExpressImageVisible(): Promise<void> {
@@ -277,23 +233,23 @@ export class OrderPage {
   }
 
   async getAllCartItemNames(): Promise<string[]> {
-    const itemNames = await this.page.locator('.inventory_item_name').allTextContents();
+    const itemNames = await this.page.locator(SELECTORS.INVENTORY_ITEM_NAME).allTextContents();
     return itemNames.map((name) => name.trim());
   }
 
   async getSubtotalAmount(): Promise<string> {
     const text = await this.subtotalLabel.textContent();
-    return text?.replace('Item total: $', '') || '';
+    return text?.replace(TEXTS.SUMMARY_LABELS.ITEM_TOTAL_PREFIX, '') || '';
   }
 
   async getTaxAmount(): Promise<string> {
     const text = await this.taxLabel.textContent();
-    return text?.replace('Tax: $', '') || '';
+    return text?.replace(TEXTS.SUMMARY_LABELS.TAX_PREFIX, '') || '';
   }
 
   async getTotalAmount(): Promise<string> {
     const text = await this.totalLabel.textContent();
-    return text?.replace('Total: $', '') || '';
+    return text?.replace(TEXTS.SUMMARY_LABELS.TOTAL_PREFIX, '') || '';
   }
 
   // Price calculation helper
