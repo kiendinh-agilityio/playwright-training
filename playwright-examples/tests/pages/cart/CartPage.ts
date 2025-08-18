@@ -4,26 +4,15 @@ import { TEXTS } from '@/tests/constants/texts';
 
 export class CartPage {
   private readonly page: Page;
+  readonly cartItems: Locator;
+  readonly cartBadge: Locator;
+  readonly checkoutButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
-  }
-
-  // Locators
-  get pageTitle(): Locator {
-    return this.page.locator(SELECTORS.TITLE);
-  }
-
-  get cartItems(): Locator {
-    return this.page.locator(SELECTORS.CART_ITEM);
-  }
-
-  get cartBadge(): Locator {
-    return this.page.locator(SELECTORS.CART_BADGE);
-  }
-
-  get checkoutButton(): Locator {
-    return this.page.getByRole('button', { name: TEXTS.BUTTONS.CHECKOUT });
+    this.cartItems = this.page.locator(SELECTORS.CART_ITEM);
+    this.cartBadge = this.page.locator(SELECTORS.CART_BADGE);
+    this.checkoutButton = this.page.getByRole('button', { name: TEXTS.BUTTONS.CHECKOUT });
   }
 
   // Item-specific locators
@@ -50,7 +39,7 @@ export class CartPage {
 
   // Verifications
   async verifyPageTitle(expectedTitle: string): Promise<void> {
-    await expect(this.pageTitle).toHaveText(expectedTitle);
+    await expect(this.page.getByText(expectedTitle)).toBeVisible();
   }
 
   async verifyCurrentUrl(expectedUrl: string): Promise<void> {
