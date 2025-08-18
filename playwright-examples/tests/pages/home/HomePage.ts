@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { TEXTS, SELECTORS } from '@/tests/constants';
+import { TEXTS, SELECTORS, TEST_IDS } from '@/tests/constants';
 
 export class HomePage {
   private readonly page: Page;
@@ -45,7 +45,7 @@ export class HomePage {
   }
 
   get sortSelect(): Locator {
-    return this.page.locator(SELECTORS.SORT_SELECT);
+    return this.page.getByTestId(TEST_IDS.PRODUCT_SORT);
   }
 
   async getAvailableSortOptions(): Promise<string[]> {
