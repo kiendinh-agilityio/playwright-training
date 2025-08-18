@@ -15,3 +15,16 @@ export const PRODUCT_DATA = {
   BIKE_LIGHT: 'Sauce Labs Bike Light',
   T_SHIRT: 'Sauce Labs Bolt T-Shirt',
 };
+
+export const TIMEOUTS = {
+  SELECTOR: 10000,
+  ADDITIONAL_WAIT: 2000,
+};
+
+export const AUTH_PATHS = {
+  USER_STORAGE: 'playwright/.auth/user.json',
+};
+
+export const WAIT_STATES = {
+  NETWORK_IDLE: 'networkidle',
+} as const;
