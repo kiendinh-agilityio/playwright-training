@@ -23,6 +23,10 @@ export class Sidebar {
     this.resetAppStateLink = this.page.getByRole('link', { name: TEXTS.LINKS.RESET_APP_STATE });
   }
 
+  async waitForLoaded(): Promise<void> {
+    await expect(this.sidebarMenu).toBeVisible();
+  }
+
   // Actions
   async openMenu(): Promise<void> {
     await this.menuButton.click();
