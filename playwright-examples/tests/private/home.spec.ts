@@ -2,90 +2,99 @@ import { test, expect } from '@playwright/test';
 import { HomePage } from '@/tests/pages/home/HomePage';
 import { TEXTS, PRODUCT_DATA, URLS } from '@/tests/constants';
 
+type SortValue = 'az' | 'za' | 'lohi' | 'hilo';
+
+const products = [PRODUCT_DATA.BACKPACK.NAME, PRODUCT_DATA.BIKE_LIGHT.NAME];
+
 test.describe('Home (Inventory) page', () => {
+  let home: HomePage;
+
   test.beforeEach(async ({ page }) => {
     await page.goto(URLS.INVENTORY);
-    const home = new HomePage(page);
+    home = new HomePage(page);
     await home.waitForLoaded();
   });
 
-  test('user can add product to cart from the Home page', async ({ page }) => {
-    const home = new HomePage(page);
-
-    await test.step(`Add "${PRODUCT_DATA.BACKPACK.NAME}" to the cart`, async () => {
-      await home.addToCart(PRODUCT_DATA.BACKPACK.NAME);
-    });
-
-    await test.step(`Verify "${PRODUCT_DATA.BACKPACK.NAME}" button changes to REMOVE`, async () => {
-      await expect(home.getItemActionButton(PRODUCT_DATA.BACKPACK.NAME)).toHaveText(
-        TEXTS.BUTTONS.REMOVE,
-      );
-    });
-
-    await test.step('Verify cart badge shows 1 item', async () => {
-      await expect(home.cartBadge()).toHaveText('1');
-    });
+  test.afterEach(async () => {
+    await home.clearCart();
   });
 
-  test('user can remove products from the cart from the Home page', async ({ page }) => {
-    const home = new HomePage(page);
+  for (const product of products) {
+    test(`user can add "${product}" to cart from the Home page`, async () => {
+      await test.step(`Add "${product}" to the cart`, async () => {
+        await home.addToCart(product);
+      });
 
-    await test.step(`Add "${PRODUCT_DATA.BACKPACK.NAME}" to the cart`, async () => {
-      await home.addToCart(PRODUCT_DATA.BACKPACK.NAME);
+      await test.step(`Verify "${product}" button changes to REMOVE`, async () => {
+        await expect(home.getItemActionButton(product)).toHaveText(TEXTS.BUTTONS.REMOVE);
+      });
+
+      await test.step('Verify cart badge shows 1 item', async () => {
+        await expect(home.cartBadge()).toHaveText('1');
+      });
     });
 
-    await test.step('Verify cart badge shows 1 item', async () => {
-      await expect(home.cartBadge()).toHaveText('1');
+    test(`user can remove "${product}" from cart on the Home page`, async () => {
+      await test.step(`Add "${product}" to the cart`, async () => {
+        await home.addToCart(product);
+      });
+
+      await test.step('Verify cart badge shows 1 item', async () => {
+        await expect(home.cartBadge()).toHaveText('1');
+      });
+
+      await test.step(`Remove "${product}" from the cart`, async () => {
+        await home.removeFromCart(product);
+      });
+
+      await test.step('Verify cart badge is empty', async () => {
+        await expect(home.cartBadge()).toHaveCount(0);
+      });
     });
+  }
 
-    await test.step(`Verify "${PRODUCT_DATA.BACKPACK.NAME}" button changes to REMOVE`, async () => {
-      await expect(home.getItemActionButton(PRODUCT_DATA.BACKPACK.NAME)).toHaveText(
-        TEXTS.BUTTONS.REMOVE,
-      );
+  const sortCases: {
+    value: SortValue;
+    desc: string;
+    comparator: (a: any, b: any) => number;
+  }[] = [
+    {
+      value: 'az',
+      desc: 'Name (A to Z)',
+      comparator: (a: string, b: string) => a.localeCompare(b),
+    },
+    {
+      value: 'za',
+      desc: 'Name (Z to A)',
+      comparator: (a: string, b: string) => b.localeCompare(a),
+    },
+    {
+      value: 'lohi',
+      desc: 'Price (low to high)',
+      comparator: (a: number, b: number) => a - b,
+    },
+    {
+      value: 'hilo',
+      desc: 'Price (high to low)',
+      comparator: (a: number, b: number) => b - a,
+    },
+  ];
+
+  for (const { value, desc, comparator } of sortCases) {
+    test(`user can sort product items by ${desc}`, async () => {
+      await test.step(`Sort by ${desc}`, async () => {
+        await home.selectSortByValue(value);
+
+        if (value === 'az' || value === 'za') {
+          const names = await home.getAllProductNames();
+          const sorted = [...names].sort(comparator as (a: string, b: string) => number);
+          expect(names).toStrictEqual(sorted);
+        } else {
+          const prices = await home.getAllPrices();
+          const sorted = [...prices].sort(comparator as (a: number, b: number) => number);
+          expect(prices).toStrictEqual(sorted);
+        }
+      });
     });
-
-    await test.step(`Remove "${PRODUCT_DATA.BACKPACK.NAME}" from the cart`, async () => {
-      await home.removeFromCart(PRODUCT_DATA.BACKPACK.NAME);
-    });
-
-    await test.step('Verify cart badge is empty', async () => {
-      await expect(home.cartBadge()).toHaveCount(0);
-    });
-  });
-
-  test('user can sort product items by name', async ({ page }) => {
-    const home = new HomePage(page);
-
-    await test.step('Sort by Name (A to Z)', async () => {
-      await home.selectSortByValue('az');
-      const namesAsc = await home.getAllProductNames();
-      const sortedNamesAsc = [...namesAsc].sort();
-      expect(namesAsc).toEqual(sortedNamesAsc);
-    });
-
-    await test.step('Sort by Name (Z to A)', async () => {
-      await home.selectSortByValue('za');
-      const namesDesc = await home.getAllProductNames();
-      const sortedNamesDesc = [...namesDesc].sort().reverse();
-      expect(namesDesc).toEqual(sortedNamesDesc);
-    });
-  });
-
-  test('user can sort product items by price', async ({ page }) => {
-    const home = new HomePage(page);
-
-    await test.step('Sort by Price (low to high)', async () => {
-      await home.selectSortByValue('lohi');
-      const pricesAsc = await home.getAllPrices();
-      const sortedAsc = [...pricesAsc].sort((a, b) => a - b);
-      expect(pricesAsc).toEqual(sortedAsc);
-    });
-
-    await test.step('Sort by Price (high to low)', async () => {
-      await home.selectSortByValue('hilo');
-      const pricesDesc = await home.getAllPrices();
-      const sortedDesc = [...pricesDesc].sort((a, b) => b - a);
-      expect(pricesDesc).toEqual(sortedDesc);
-    });
-  });
+  }
 });
