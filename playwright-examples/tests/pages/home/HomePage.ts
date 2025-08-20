@@ -69,4 +69,13 @@ export class HomePage {
     const nameTexts = await this.page.locator(SELECTORS.INVENTORY_ITEM_NAME).allTextContents();
     return nameTexts.map((t) => t.trim());
   }
+
+  async clearCart(): Promise<void> {
+    const removeButtons = this.page.getByRole('button', { name: TEXTS.BUTTONS.REMOVE });
+    const count = await removeButtons.count();
+
+    for (let i = 0; i < count; i++) {
+      await removeButtons.nth(i).click();
+    }
+  }
 }
