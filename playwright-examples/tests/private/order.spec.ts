@@ -65,12 +65,12 @@ test.describe('Order Functionality', () => {
   });
 
   test('Checkout overview page displays correct information', async () => {
-    const products = [PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT];
+    const products = [PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT, PRODUCT_DATA.T_SHIRT];
 
     await checkoutTest.setupAndGoToOverview(products);
 
     await orderPage.verifyCheckoutStepTwoPage();
-    await orderPage.verifyCartItemsInOverview(products);
+    await orderPage.verifyCartItemsInOverview(products.map((p) => p.NAME));
     await orderPage.verifySummaryInformation();
     await expect(orderPage.finishButton).toBeVisible();
     await expect(orderPage.cancelOverviewButton).toBeVisible();
@@ -108,7 +108,7 @@ test.describe('Order Functionality', () => {
 
     await checkoutTest.setupAndGoToOverview(products);
 
-    await orderPage.verifyCartItemsInOverview(products);
+    await orderPage.verifyCartItemsInOverview(products.map((p) => p.NAME));
     await orderPage.verifySummaryInformation();
 
     const tax = await orderPage.getTaxAmount();
