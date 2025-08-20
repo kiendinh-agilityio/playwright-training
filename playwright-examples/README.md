@@ -36,7 +36,7 @@ cd playwright-examples
 3. Install Dependencies
 
 ```
-npm install
+pnpm install
 ```
 
 ## Ways to use
