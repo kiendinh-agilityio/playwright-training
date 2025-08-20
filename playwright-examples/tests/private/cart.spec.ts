@@ -20,12 +20,12 @@ test.describe('Cart Functionality', () => {
       await expect(page).toHaveURL(MATCHERS.INVENTORY);
     });
 
-    await test.step(`Step 2: Add "${PRODUCT_DATA.BACKPACK}" to the cart`, async () => {
-      await homePage.addToCart(PRODUCT_DATA.BACKPACK);
+    await test.step(`Step 2: Add "${PRODUCT_DATA.BACKPACK.NAME}" to the cart`, async () => {
+      await homePage.addToCart(PRODUCT_DATA.BACKPACK.NAME);
     });
 
-    await test.step(`Step 3: Add "${PRODUCT_DATA.BIKE_LIGHT}" to the cart`, async () => {
-      await homePage.addToCart(PRODUCT_DATA.BIKE_LIGHT);
+    await test.step(`Step 3: Add "${PRODUCT_DATA.BIKE_LIGHT.NAME}" to the cart`, async () => {
+      await homePage.addToCart(PRODUCT_DATA.BIKE_LIGHT.NAME);
     });
 
     await test.step('Step 4: Click the cart icon in the right corner', async () => {
@@ -36,8 +36,8 @@ test.describe('Cart Functionality', () => {
       await cartPage.verifyCurrentUrl(URLS.CART);
       await cartPage.verifyPageTitle(TEXTS.TITLES.YOUR_CART);
       await cartPage.verifyCartItemCount(2);
-      await cartPage.verifyItemExists(PRODUCT_DATA.BACKPACK);
-      await cartPage.verifyItemExists(PRODUCT_DATA.BIKE_LIGHT);
+      await cartPage.verifyItemExists(PRODUCT_DATA.BACKPACK.NAME);
+      await cartPage.verifyItemExists(PRODUCT_DATA.BIKE_LIGHT.NAME);
       await cartPage.verifyCartBadgeCount(2);
     });
   });
@@ -47,28 +47,28 @@ test.describe('Cart Functionality', () => {
       await expect(page).toHaveURL(MATCHERS.INVENTORY);
     });
 
-    await test.step(`Step 2: Add "${PRODUCT_DATA.BACKPACK}" to the cart`, async () => {
-      await homePage.addToCart(PRODUCT_DATA.BACKPACK);
+    await test.step(`Step 2: Add "${PRODUCT_DATA.BACKPACK.NAME}" to the cart`, async () => {
+      await homePage.addToCart(PRODUCT_DATA.BACKPACK.NAME);
     });
 
-    await test.step(`Step 3: Add "${PRODUCT_DATA.BIKE_LIGHT}" to the cart`, async () => {
-      await homePage.addToCart(PRODUCT_DATA.BIKE_LIGHT);
+    await test.step(`Step 3: Add "${PRODUCT_DATA.BIKE_LIGHT.NAME}" to the cart`, async () => {
+      await homePage.addToCart(PRODUCT_DATA.BIKE_LIGHT.NAME);
     });
 
     await test.step('Step 4: Click the cart icon in the right corner', async () => {
       await cartPage.clickCartIcon();
     });
 
-    await test.step(`Step 5: Remove "${PRODUCT_DATA.BACKPACK}" from the cart`, async () => {
-      await cartPage.removeItem(PRODUCT_DATA.BACKPACK);
+    await test.step(`Step 5: Remove "${PRODUCT_DATA.BACKPACK.NAME}" from the cart`, async () => {
+      await cartPage.removeItem(PRODUCT_DATA.BACKPACK.NAME);
     });
 
     await test.step('Step 6: Verify user can remove an item from the cart on the Cart page', async () => {
       await cartPage.verifyCurrentUrl(URLS.CART);
       await cartPage.verifyPageTitle(TEXTS.TITLES.YOUR_CART);
       await cartPage.verifyCartItemCount(1);
-      await cartPage.verifyItemExists(PRODUCT_DATA.BIKE_LIGHT);
-      await cartPage.verifyItemDoesNotExist(PRODUCT_DATA.BACKPACK);
+      await cartPage.verifyItemExists(PRODUCT_DATA.BIKE_LIGHT.NAME);
+      await cartPage.verifyItemDoesNotExist(PRODUCT_DATA.BACKPACK.NAME);
       await cartPage.verifyCartBadgeCount(1);
     });
   });
