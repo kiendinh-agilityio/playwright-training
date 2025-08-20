@@ -8,67 +8,54 @@ test.describe('Sidebar Functionality', () => {
   test.beforeEach(async ({ page }) => {
     sidebar = new Sidebar(page);
     await page.goto(URLS.INVENTORY);
+    await sidebar.waitForLoaded();
   });
 
-  test('Verify that the user stays on the home page when clicking "All Items" in the menu sidebar', async ({
-    page,
-  }) => {
-    await test.step('Step 1: Verify user is on Home page', async () => {
-      await expect(page).toHaveURL(MATCHERS.INVENTORY);
-    });
+  const sidebarActions = [
+    {
+      name: 'All Items',
+      action: async (sidebar: Sidebar) => await sidebar.clickAllItems(),
+      expectedUrl: MATCHERS.INVENTORY,
+      verifyTitle: null,
+    },
+    {
+      name: 'About',
+      action: async (sidebar: Sidebar) => await sidebar.clickAbout(),
+      expectedUrl: MATCHERS.SAUCELABS,
+      verifyTitle: TEXTS.MESSAGES.ABOUT_PAGE_TITLE,
+    },
+    {
+      name: 'Logout',
+      action: async (sidebar: Sidebar) => await sidebar.clickLogout(),
+      expectedUrl: MATCHERS.ROOT,
+      verifyTitle: TEXTS.TITLES.APP,
+    },
+  ];
 
-    await test.step('Step 2: Open menu sidebar', async () => {
-      await sidebar.openMenu();
-      await sidebar.verifyMenuIsOpen();
-    });
+  for (const { name, action, expectedUrl, verifyTitle } of sidebarActions) {
+    test(`Sidebar navigation - ${name}`, async ({ page }) => {
+      await test.step('Open menu sidebar', async () => {
+        await sidebar.openMenu();
+        await sidebar.verifyMenuIsOpen();
+      });
 
-    await test.step('Step 3: Click "All Items"', async () => {
-      await sidebar.clickAllItems();
-    });
+      await test.step(`Click "${name}"`, async () => {
+        await action(sidebar);
+      });
 
-    await test.step('Step 4: Close menu sidebar', async () => {
-      await sidebar.closeMenu();
-      await sidebar.verifyMenuIsClosed();
-    });
+      await test.step(`Verify navigation to expected page`, async () => {
+        await expect(page).toHaveURL(expectedUrl);
+        if (verifyTitle) {
+          await expect(page).toHaveTitle(verifyTitle);
+        }
+      });
 
-    await test.step('Step 5: Verify user stays on Home page', async () => {
-      await sidebar.verifyCurrentUrl(MATCHERS.INVENTORY);
+      await test.step('Close menu sidebar (if applicable)', async () => {
+        if (name !== 'Logout' && name !== 'About') {
+          await sidebar.closeMenu();
+          await sidebar.verifyMenuIsClosed();
+        }
+      });
     });
-  });
-
-  test('Verify that the user navigates to a new site saucelabs', async ({ page }) => {
-    await test.step('Step 1: Verify user is on Home page', async () => {
-      await expect(page).toHaveURL(MATCHERS.INVENTORY);
-    });
-
-    await test.step('Step 2: Open menu sidebar', async () => {
-      await sidebar.openMenu();
-      await sidebar.verifyMenuIsOpen();
-    });
-
-    await test.step('Step 3: Click "About"', async () => {
-      await sidebar.clickAbout();
-    });
-
-    await test.step('Step 4: Verify user navigates to Sauce Labs site', async () => {
-      await expect(page).toHaveURL(MATCHERS.SAUCELABS);
-      await sidebar.verifyPageTitle(TEXTS.MESSAGES.ABOUT_PAGE_TITLE);
-    });
-  });
-
-  test('Verify that user is able to logout successfully', async ({ page }) => {
-    await test.step('Step 1: Open menu sidebar', async () => {
-      await sidebar.openMenu();
-      await sidebar.verifyMenuIsOpen();
-    });
-
-    await test.step('Step 2: Click "Logout"', async () => {
-      await sidebar.clickLogout();
-    });
-
-    await test.step('Step 3: Verify user navigates to Login page', async () => {
-      await expect(page).toHaveURL(MATCHERS.ROOT);
-      await expect(page).toHaveTitle(TEXTS.TITLES.APP);
-    });
-  });
+  }
 });
