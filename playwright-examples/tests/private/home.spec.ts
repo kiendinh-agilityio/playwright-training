@@ -10,15 +10,16 @@ test.describe('Home (Inventory) page', () => {
   });
 
   test('user can add product to cart from the Home page', async ({ page }) => {
-    const productName = PRODUCT_DATA.BACKPACK;
     const home = new HomePage(page);
 
-    await test.step(`Add "${productName}" to the cart`, async () => {
-      await home.addToCart(productName);
+    await test.step(`Add "${PRODUCT_DATA.BACKPACK.NAME}" to the cart`, async () => {
+      await home.addToCart(PRODUCT_DATA.BACKPACK.NAME);
     });
 
-    await test.step(`Verify "${productName}" button changes to REMOVE`, async () => {
-      await expect(home.getItemActionButton(productName)).toHaveText(TEXTS.BUTTONS.REMOVE);
+    await test.step(`Verify "${PRODUCT_DATA.BACKPACK.NAME}" button changes to REMOVE`, async () => {
+      await expect(home.getItemActionButton(PRODUCT_DATA.BACKPACK.NAME)).toHaveText(
+        TEXTS.BUTTONS.REMOVE,
+      );
     });
 
     await test.step('Verify cart badge shows 1 item', async () => {
@@ -27,19 +28,24 @@ test.describe('Home (Inventory) page', () => {
   });
 
   test('user can remove products from the cart from the Home page', async ({ page }) => {
-    const productName = PRODUCT_DATA.BACKPACK;
     const home = new HomePage(page);
 
-    await test.step(`Add "${productName}" to the cart`, async () => {
-      await home.addToCart(productName);
+    await test.step(`Add "${PRODUCT_DATA.BACKPACK.NAME}" to the cart`, async () => {
+      await home.addToCart(PRODUCT_DATA.BACKPACK.NAME);
     });
 
     await test.step('Verify cart badge shows 1 item', async () => {
       await expect(home.cartBadge()).toHaveText('1');
     });
 
-    await test.step(`Remove "${productName}" from the cart`, async () => {
-      await home.removeFromCart(productName);
+    await test.step(`Verify "${PRODUCT_DATA.BACKPACK.NAME}" button changes to REMOVE`, async () => {
+      await expect(home.getItemActionButton(PRODUCT_DATA.BACKPACK.NAME)).toHaveText(
+        TEXTS.BUTTONS.REMOVE,
+      );
+    });
+
+    await test.step(`Remove "${PRODUCT_DATA.BACKPACK.NAME}" from the cart`, async () => {
+      await home.removeFromCart(PRODUCT_DATA.BACKPACK.NAME);
     });
 
     await test.step('Verify cart badge is empty', async () => {
