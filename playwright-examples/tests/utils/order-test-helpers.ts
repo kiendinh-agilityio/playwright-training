@@ -2,7 +2,8 @@ import { HomePage } from '@/tests/pages/home/HomePage';
 import { CartPage } from '@/tests/pages/cart/CartPage';
 import { OrderPage } from '@/tests/pages/order/OrderPage';
 import type { CheckoutData } from '@/tests/pages/order/OrderPage';
-import { TEST_USER_DATA } from '@/tests/constants/test-data';
+import { TEST_USER_DATA, PRODUCT_DATA } from '@/tests/constants/test-data';
+import { CheckoutTypes } from '@/tests/utils/useCheckoutTest';
 
 // Helper class for order test operations
 export class OrderTestHelpers {
@@ -12,9 +13,9 @@ export class OrderTestHelpers {
     private orderPage: OrderPage,
   ) {}
 
-  async addProductsToCart(products: string[]): Promise<void> {
+  async addProductsToCart(products: CheckoutTypes.Product[]): Promise<void> {
     for (const product of products) {
-      await this.homePage.addToCart(product);
+      await this.homePage.addToCart(product.NAME);
     }
   }
 
@@ -23,7 +24,9 @@ export class OrderTestHelpers {
     await this.cartPage.checkout();
   }
 
-  async setupCheckoutWithProducts(products: string[]): Promise<void> {
+  async setupCheckoutWithProducts(
+    products: CheckoutTypes.Product[] = [PRODUCT_DATA.BACKPACK],
+  ): Promise<void> {
     await this.addProductsToCart(products);
     await this.navigateToCheckout();
   }
