@@ -11,9 +11,24 @@ export const EXPECTED_SUBTOTALS = {
 };
 
 export const PRODUCT_DATA = {
-  BACKPACK: 'Sauce Labs Backpack',
-  BIKE_LIGHT: 'Sauce Labs Bike Light',
-  T_SHIRT: 'Sauce Labs Bolt T-Shirt',
+  BACKPACK: {
+    NAME: 'Sauce Labs Backpack',
+    PRICE: '29.99',
+    DESCRIPTION:
+      'carry.allTheThings() with the sleek, streamlined Sly Pack that melds uncompromising style with unequaled laptop and tablet protection.',
+  },
+  BIKE_LIGHT: {
+    NAME: 'Sauce Labs Bike Light',
+    PRICE: '9.99',
+    DESCRIPTION:
+      "A red light isn't the desired state in testing but it sure helps when riding your bike at night. Water-resistant with 3 lighting modes, 1 AAA battery included.",
+  },
+  T_SHIRT: {
+    NAME: 'Sauce Labs Bolt T-Shirt',
+    PRICE: '15.99',
+    DESCRIPTION:
+      'Get your testing superhero on with the Sauce Labs bolt T-shirt. From American Apparel, 100% ringspun combed cotton, heather gray with red bolt.',
+  },
 };
 
 export const TIMEOUTS = {

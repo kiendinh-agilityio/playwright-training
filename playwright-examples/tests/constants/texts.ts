@@ -34,19 +34,6 @@ export const TEXTS = {
     PASSWORD: 'Password',
   },
 
-  PRICES: {
-    BACKPACK: '$29.99',
-    BIKE_LIGHT: '$9.99',
-    T_SHIRT: '$15.99',
-  },
-
-  DESCRIPTIONS: {
-    BACKPACK:
-      'carry.allTheThings() with the sleek, streamlined Sly Pack that melds uncompromising style with unequaled laptop and tablet protection.',
-    BIKE_LIGHT:
-      "A red light isn't the desired state in testing but it sure helps when riding your bike at night. Water-resistant with 3 lighting modes, 1 AAA battery included.",
-  },
-
   MESSAGES: {
     CHECKOUT_COMPLETE_HEADER: 'Thank you for your order!',
     CHECKOUT_COMPLETE_TEXT:
