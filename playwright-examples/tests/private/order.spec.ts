@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CartPage, HomePage, OrderPage } from '@/tests/pages/index';
-import { createOrderTestHelpers } from '@/tests/utils/order-test-helpers';
+import { HomePage, OrderPage } from '@/tests/pages/index';
 import { useCheckoutTest } from '@/tests/utils/useCheckoutTest';
 import {
   ERROR_MESSAGES,
@@ -14,17 +13,13 @@ import {
 
 test.describe('Order Functionality', () => {
   let homePage: HomePage;
-  let cartPage: CartPage;
   let orderPage: OrderPage;
-  let helpers: ReturnType<typeof createOrderTestHelpers>;
   let checkoutTest: ReturnType<typeof useCheckoutTest>;
 
   test.beforeEach(async ({ page }) => {
     homePage = new HomePage(page);
-    cartPage = new CartPage(page);
     orderPage = new OrderPage(page);
-    helpers = createOrderTestHelpers(homePage, cartPage, orderPage);
-    checkoutTest = useCheckoutTest(helpers, orderPage, homePage, page);
+    checkoutTest = useCheckoutTest(orderPage, homePage, page);
 
     await page.goto(URLS.INVENTORY);
     await homePage.waitForLoaded();
@@ -32,41 +27,40 @@ test.describe('Order Functionality', () => {
 
   test('Successful Checkout - user can check out successfully', async ({ page }) => {
     await test.step('Setup checkout with products', async () => {
-      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT]);
+      await checkoutTest.setupCheckoutWithProducts([
+        PRODUCT_DATA.BACKPACK,
+        PRODUCT_DATA.BIKE_LIGHT,
+      ]);
     });
 
     await test.step('Complete checkout process', async () => {
-      await helpers.completeCheckoutProcess();
+      await checkoutTest.completeCheckoutProcess();
+      await checkoutTest.verifySuccessfulCheckout();
     });
 
-    await test.step('Verify successful checkout', async () => {
-      await helpers.verifySuccessfulCheckout();
-    });
-
-    await test.step('Back to home and verify cart empty', async () => {
+    await test.step('Return to home and verify cart is empty', async () => {
       await orderPage.backToHome();
       await expect(page).toHaveURL(MATCHERS.INVENTORY);
-      await helpers.verifyCartIsEmpty();
+      await checkoutTest.verifyCartIsEmpty();
     });
   });
 
   test('Checkout with Empty Inputs - should block checkout', async () => {
     await test.step('Setup checkout with products', async () => {
-      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK, PRODUCT_DATA.BIKE_LIGHT]);
+      await checkoutTest.setupCheckoutWithProducts([
+        PRODUCT_DATA.BACKPACK,
+        PRODUCT_DATA.BIKE_LIGHT,
+      ]);
     });
 
-    await test.step('Try to continue without filling info', async () => {
+    await test.step('Attempt to continue checkout with empty fields', async () => {
       await orderPage.continueToOverview();
-    });
-
-    await test.step('Verify error message appears', async () => {
       await orderPage.verifyCurrentUrl(URLS.CHECKOUT_STEP_ONE);
       await orderPage.verifyPageTitle(TEXTS.TITLES.CHECKOUT_INFORMATION);
       await checkoutTest.verifyFormError(ERROR_MESSAGES.FIRST_NAME_REQUIRED);
     });
   });
 
-  // ✅ Refactor: Parameterized tests cho form validation
   const requiredFields = [
     {
       name: 'first name',
@@ -108,20 +102,16 @@ test.describe('Order Functionality', () => {
       await orderPage.verifyCheckoutStepTwoPage();
       await orderPage.verifyCartItemsInOverview(products.map((p) => p.NAME));
       await orderPage.verifySummaryInformation();
-    });
-
-    await test.step('Verify overview buttons visible', async () => {
       await expect(orderPage.finishButton).toBeVisible();
       await expect(orderPage.cancelOverviewButton).toBeVisible();
     });
   });
 
-  // ✅ Refactor: Parameterized tests cho Cancel button
   const cancelCases = [
     {
       name: 'step one returns to cart',
       setup: async () => {
-        await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+        await checkoutTest.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
         await orderPage.verifyCheckoutStepOnePage();
         await orderPage.cancelCheckout();
       },
@@ -147,7 +137,6 @@ test.describe('Order Functionality', () => {
       await test.step(`Setup checkout and cancel at ${name}`, async () => {
         await setup();
       });
-
       await test.step('Verify cancel action result', async () => {
         await verify();
       });
@@ -156,11 +145,14 @@ test.describe('Order Functionality', () => {
 
   test('Form fields - should fill and validate properly', async () => {
     await test.step('Setup checkout with product', async () => {
-      await helpers.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
+      await checkoutTest.setupCheckoutWithProducts([PRODUCT_DATA.BACKPACK]);
     });
 
-    await test.step('Verify form empty and fill with valid data', async () => {
+    await test.step('Verify empty form fields', async () => {
       await orderPage.verifyFormFieldsEmpty();
+    });
+
+    await test.step('Fill form and verify values', async () => {
       await orderPage.fillCheckoutInformationWithData(TEST_USER_DATA.VALID);
       await orderPage.verifyFormFieldsFilledWithData(TEST_USER_DATA.VALID);
     });
@@ -181,12 +173,8 @@ test.describe('Order Functionality', () => {
     await test.step('Verify items and summary info', async () => {
       await orderPage.verifyCartItemsInOverview(products.map((p) => p.NAME));
       await orderPage.verifySummaryInformation();
-    });
-
-    await test.step('Verify tax and total calculation', async () => {
       const tax = await orderPage.getTaxAmount();
       const total = await orderPage.getTotalAmount();
-
       await orderPage.verifyExpectedSubtotal(EXPECTED_SUBTOTALS.THREE_ITEMS);
       expect(tax).toBeTruthy();
       expect(total).toBeTruthy();
