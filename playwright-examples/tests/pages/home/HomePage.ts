@@ -44,6 +44,11 @@ export class HomePage {
     return Number(text ?? 0);
   }
 
+  async goToCart(): Promise<void> {
+    await this.page.locator(SELECTORS.CART_ICON).click();
+    await expect(this.page).toHaveURL(/cart/);
+  }
+
   get sortSelect(): Locator {
     return this.page.getByTestId(TEST_IDS.PRODUCT_SORT);
   }
