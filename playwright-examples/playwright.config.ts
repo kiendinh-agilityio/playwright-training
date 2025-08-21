@@ -29,57 +29,35 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    // Setup project
     { name: 'setup', testMatch: /.*\.setup\.ts/ },
 
-    // Private projects (require authentication)
+    // Unified projects for all tests
     {
-      name: 'chromium-private',
-      testMatch: /.*\/private\/.*\.spec\.ts$/,
+      name: 'chromium',
+      testMatch: /.*\/.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
     },
-
     {
-      name: 'firefox-private',
-      testMatch: /.*\/private\/.*\.spec\.ts$/,
+      name: 'firefox',
+      testMatch: /.*\/.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Firefox'],
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
     },
-
     {
-      name: 'webkit-private',
-      testMatch: /.*\/private\/.*\.spec\.ts$/,
+      name: 'webkit',
+      testMatch: /.*\/.*\.spec\.ts$/,
       use: {
         ...devices['Desktop Safari'],
         storageState: 'playwright/.auth/user.json',
       },
       dependencies: ['setup'],
-    },
-
-    // Public projects (no authentication required)
-    {
-      name: 'chromium-public',
-      testMatch: /.*\/public\/.*\.spec\.ts$/,
-      use: { ...devices['Desktop Chrome'] },
-    },
-
-    {
-      name: 'firefox-public',
-      testMatch: /.*\/public\/.*\.spec\.ts$/,
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit-public',
-      testMatch: /.*\/public\/.*\.spec\.ts$/,
-      use: { ...devices['Desktop Safari'] },
     },
   ],
 

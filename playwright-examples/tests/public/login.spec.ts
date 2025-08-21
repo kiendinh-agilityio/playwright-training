@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from '@/tests/pages/login/LoginPage';
 import { ERROR_MESSAGES, TEXTS, SELECTORS } from '@/tests/constants';
 
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test.describe('Login', () => {
   let loginPage: LoginPage;
 
