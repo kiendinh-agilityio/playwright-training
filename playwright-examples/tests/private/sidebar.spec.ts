@@ -14,25 +14,22 @@ test.describe('Sidebar Functionality', () => {
   const sidebarActions = [
     {
       name: 'All Items',
-      action: async (sidebar: Sidebar) => await sidebar.clickAllItems(),
       expectedUrl: MATCHERS.INVENTORY,
       verifyTitle: null,
     },
     {
       name: 'About',
-      action: async (sidebar: Sidebar) => await sidebar.clickAbout(),
       expectedUrl: MATCHERS.SAUCELABS,
       verifyTitle: TEXTS.MESSAGES.ABOUT_PAGE_TITLE,
     },
     {
       name: 'Logout',
-      action: async (sidebar: Sidebar) => await sidebar.clickLogout(),
       expectedUrl: MATCHERS.ROOT,
       verifyTitle: TEXTS.TITLES.APP,
     },
   ];
 
-  for (const { name, action, expectedUrl, verifyTitle } of sidebarActions) {
+  for (const { name, expectedUrl, verifyTitle } of sidebarActions) {
     test(`Sidebar navigation - ${name}`, async ({ page }) => {
       await test.step('Open menu sidebar', async () => {
         await sidebar.openMenu();
@@ -40,7 +37,7 @@ test.describe('Sidebar Functionality', () => {
       });
 
       await test.step(`Click "${name}"`, async () => {
-        await action(sidebar);
+        await sidebar.clickByName(name);
       });
 
       await test.step(`Verify navigation to expected page`, async () => {

@@ -70,4 +70,9 @@ export class Sidebar {
   async verifyPageTitle(title: string | RegExp): Promise<void> {
     await expect(this.page).toHaveTitle(title);
   }
+
+  async clickByName(name: string): Promise<void> {
+    const link = this.page.getByRole('link', { name, exact: true });
+    await link.click();
+  }
 }
