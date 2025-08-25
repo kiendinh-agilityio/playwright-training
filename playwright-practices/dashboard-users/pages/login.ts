@@ -1,5 +1,5 @@
 import { Page, Locator, FrameLocator, expect } from '@playwright/test';
-import { BASE_URL, BREADCRUMBS, IFRAME_SELECTORS } from '@/constants';
+import { BASE_URL, IFRAME_SELECTORS } from '@/constants';
 
 export class LoginPage {
   readonly page: Page;
@@ -7,7 +7,6 @@ export class LoginPage {
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly loginButton: Locator;
-  readonly breadcrumbUsers: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -15,7 +14,6 @@ export class LoginPage {
     this.emailInput = this.frame.getByRole('textbox', { name: 'Email *' });
     this.passwordInput = this.frame.getByRole('textbox', { name: 'Password *' });
     this.loginButton = this.frame.getByRole('button', { name: 'Login' });
-    this.breadcrumbUsers = this.frame.getByRole('main').getByText(BREADCRUMBS.USERS);
   }
 
   async goto() {
@@ -29,10 +27,6 @@ export class LoginPage {
     await this.loginButton.click();
   }
 
-  async assertLoginSuccess() {
-    await expect(this.breadcrumbUsers).toBeVisible();
-  }
-
   async assertInvalidCredentials() {
     await expect(this.frame.getByText('Invalid login credentials')).toBeVisible();
   }
@@ -42,6 +36,6 @@ export class LoginPage {
       (el: HTMLInputElement) => el.validationMessage,
     );
 
-    expect(emailValidation.toLowerCase()).toContain('fill out');
+    expect(emailValidation.toLowerCase()).toMatch(/(please )?fill out this field/);
   }
 }

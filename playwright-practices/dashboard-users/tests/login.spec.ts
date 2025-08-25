@@ -24,9 +24,9 @@ test.describe('Login Functionality', () => {
   ] as const;
 
   const verifyMap = {
-    success: async (loginPage) =>
+    success: async (loginPage, dashboardPage) =>
       await test.step('Verify user navigates to Users page', async () => {
-        await loginPage.assertLoginSuccess();
+        await dashboardPage.assertUsersBreadcrumbVisible();
       }),
     invalidCredentials: async (loginPage) =>
       await test.step('Verify error toast is shown', async () => {
@@ -39,12 +39,12 @@ test.describe('Login Functionality', () => {
   };
 
   for (const { name, username, password, expectation } of casesLogin) {
-    test(name, async ({ loginPage }) => {
+    test(name, async ({ loginPage, dashboardPage }) => {
       await test.step('Fill email & password and click Login', async () => {
         await loginPage.login(username, password);
       });
 
-      await verifyMap[expectation](loginPage);
+      await verifyMap[expectation](loginPage, dashboardPage);
     });
   }
 });
