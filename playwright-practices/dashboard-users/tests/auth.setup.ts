@@ -2,13 +2,13 @@ import path from 'path';
 import { test } from '@/fixtures/pageFixtures';
 import { CREDENTIALS } from '@/constants';
 
-const STORAGE_STATE = path.join(__dirname, 'storageState.json');
+const STORAGE_STATE = path.join(__dirname, '.auth/user.json');
 
-test('authenticate', async ({ loginPage, page }) => {
+test('authenticate', async ({ loginPage, dashboardPage, page }) => {
   const { username, password } = CREDENTIALS.ACCOUNT_SUCCESS;
 
   await loginPage.login(username, password);
-  await loginPage.assertLoginSuccess();
+  await dashboardPage.assertUsersBreadcrumbVisible();
 
   await page.context().storageState({ path: STORAGE_STATE });
 });
