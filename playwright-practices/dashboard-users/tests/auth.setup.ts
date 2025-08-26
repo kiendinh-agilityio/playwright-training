@@ -2,7 +2,7 @@ import path from 'path';
 import { test } from '@/fixtures/pageFixtures';
 import { CREDENTIALS } from '@/constants';
 
-const STORAGE_STATE = path.join(__dirname, '.auth/user.json');
+const STORAGE_STATE = path.join(process.cwd(), 'playwright/.auth/user.json');
 
 test('authenticate', async ({ loginPage, dashboardPage, page }) => {
   const { username, password } = CREDENTIALS.ACCOUNT_SUCCESS;
