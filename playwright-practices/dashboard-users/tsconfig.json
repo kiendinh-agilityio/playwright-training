@@ -10,8 +10,10 @@
     "outDir": "./dist",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["tests/**/*.ts", "tests-examples/**/*.ts", "playwright.config.ts"],
+  "include": ["tests/**/*.ts", "tests-examples/**/*.ts", "playwright.config.ts", "**/*.ts"],
   "exclude": ["node_modules", "dist", "playwright-report", "test-results"]
 }
