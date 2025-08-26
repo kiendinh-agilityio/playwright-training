@@ -7,6 +7,7 @@ export class LoginPage {
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly loginButton: Locator;
+  readonly heading: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -14,11 +15,14 @@ export class LoginPage {
     this.emailInput = this.frame.getByRole('textbox', { name: 'Email *' });
     this.passwordInput = this.frame.getByRole('textbox', { name: 'Password *' });
     this.loginButton = this.frame.getByRole('button', { name: 'Login' });
+    this.heading = this.frame.getByRole('heading', { name: 'Superuser login' });
   }
 
   async goto() {
-    await this.page.goto(BASE_URL);
-    await expect(this.emailInput).toBeVisible();
+    await this.page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await this.page
+      .locator(IFRAME_SELECTORS.DASHBOARD)
+      .waitFor({ state: 'visible', timeout: 20000 });
   }
 
   async login(email: string, password: string) {
@@ -37,5 +41,9 @@ export class LoginPage {
     );
 
     expect(emailValidation.toLowerCase()).toMatch(/(please )?fill out this field/);
+  }
+
+  async assertHeadingVisible() {
+    await expect(this.heading).toBeVisible();
   }
 }

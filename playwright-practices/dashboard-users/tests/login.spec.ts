@@ -4,6 +4,13 @@ import { CREDENTIALS } from '@/constants';
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Login Functionality', () => {
+  test('Displays "Superuser login" heading on load', async ({ loginPage }) => {
+    await test.step('Navigate to login page and verify heading', async () => {
+      await loginPage.goto();
+      await loginPage.assertHeadingVisible();
+    });
+  });
+
   const casesLogin = [
     {
       name: 'Login successfully with valid credentials',
