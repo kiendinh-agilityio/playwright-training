@@ -12,9 +12,9 @@ export class TableHelper {
     const dataRows = table.getByRole('row').nth(1);
     await expect(dataRows).toBeVisible();
     if (text) {
-      const rows = table.getByRole('row').filter({ hasText: text });
-      const count = await rows.count();
-      expect(count).toBeGreaterThan(0);
+      await expect(table.getByRole('row').filter({ hasText: text })).toHaveCount(1, {
+        timeout: 10000,
+      });
     }
   }
 }
