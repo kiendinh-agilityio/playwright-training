@@ -6,24 +6,31 @@ import {
   waitForEditUserRequest,
 } from '@/utils/';
 import { validationTestCases, createRandomUserData } from '@/mocks/userMocks';
-import { UserApiResponse, EditUserResponse } from '@/interfaces/user';
+import { UserApiResponse } from '@/interfaces/user';
 
 test.describe('Users management', () => {
-  // Store created user data globally for reuse across tests
   let createdUserApiResponse: UserApiResponse | null = null;
 
-  test.beforeEach(async ({ loginPage, dashboardPage }) => {
+  test.beforeEach(async ({ loginPage, dashboardPage, userApi }) => {
     await test.step('Login and navigate to users page', async () => {
       await loginPage.goto();
       await dashboardPage.assertUsersBreadcrumbVisible();
     });
+
+    await test.step('Create a fresh user via API for this test', async () => {
+      const base = createRandomUserData('pb', 'pbuser');
+      const payload = {
+        ...base,
+        passwordConfirm: base.password,
+      };
+      createdUserApiResponse = await userApi.createUser(payload);
+    });
   });
 
-  test.afterEach(async () => {
-    // Cleanup: Reset the stored data after each test
+  test.afterEach(async ({ userApi }) => {
     if (createdUserApiResponse?.id) {
-      await test.step('Cleanup: Reset created user data', async () => {
-        // Reset the stored data for next test
+      await test.step('Cleanup: delete created user via API', async () => {
+        await userApi.deleteUser(createdUserApiResponse!.id);
         createdUserApiResponse = null;
       });
     }
@@ -69,13 +76,10 @@ test.describe('Users management', () => {
       const apiUser = await responsePromise;
       await ModalActions.waitForModalToHide(usersPage.modalTitle);
 
-      // Store the created user API response for reuse
-      createdUserApiResponse = apiUser;
-
       const table = new TableHelper(usersPage.frame);
       await table.expectRowContains(apiUser.email);
 
-      await test.step('Verify created user row matches API response', async () => {
+      await test.step('Verify that the newly created user in table matches the API create user response', async () => {
         await table.expectRowDataById(apiUser.id, {
           email: apiUser.email,
           username: apiUser.username,
@@ -107,42 +111,39 @@ test.describe('Users management', () => {
   test('Verify that a user can edit user in the table successfully', async ({
     page,
     usersPage,
+    userApi,
   }) => {
-    if (!createdUserApiResponse?.id) {
-      test.skip();
-      return;
-    }
-
     const updatedData = createRandomUserData('pb', 'pbuser-updated');
     const newEmail = updatedData.email;
+    const base = createRandomUserData('pb', 'pbuser');
+    const payload = { ...base, passwordConfirm: base.password };
+    const userToEdit = await userApi.createUser(payload);
+    let updatedUser: UserApiResponse;
 
-    await test.step('Open the previously created user for editing using collectionId', async () => {
-      await usersPage.openRecordForEditByEmail(createdUserApiResponse.email);
+    await test.step('Open the user for editing using email', async () => {
+      await usersPage.openRecordForEditByEmail(userToEdit.email);
     });
 
     await test.step('Update email field and save', async () => {
       await usersPage.updateUserFields({ email: newEmail });
 
-      const responsePromise = waitForEditUserRequest(page, createdUserApiResponse.id);
+      const responsePromise = waitForEditUserRequest(page);
       await usersPage.saveChanges();
-      const editResponse: EditUserResponse = await responsePromise;
-
-      await test.step('Verify API response status', async () => {
-        expect(editResponse.status).toBeGreaterThanOrEqual(200);
-        expect(editResponse.status).toBeLessThan(300);
-      });
-
-      await test.step('Verify updated email in response data', async () => {
-        expect(editResponse.data?.email ?? '').toBe(newEmail);
-      });
+      updatedUser = await responsePromise;
 
       const successText = usersPage.frame.getByText(/success|updated|saved/i);
       await ModalActions.waitForModalToHideOrSuccess(usersPage.modalTitle, successText);
     });
 
-    await test.step('Verify the updated email appears in table', async () => {
+    await test.step('Verify that the newly edit user in table matches the API edit user response ', async () => {
       const table = new TableHelper(usersPage.frame);
       await table.expectRowContains(newEmail);
+      const rows = await table.getAllRowsData();
+      const uiRow = rows.find((r) => r.email === newEmail);
+
+      expect(uiRow).toBeTruthy();
+      expect(uiRow.username).toBe(updatedUser.username);
+      expect(uiRow.name).toBe(updatedUser.name);
     });
   });
 });
