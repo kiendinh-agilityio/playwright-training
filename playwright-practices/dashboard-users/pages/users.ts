@@ -86,12 +86,7 @@ export class UsersPage {
     }
   }
 
-  async waitForSaveChangesButtonEnabled(timeout: number = 30000) {
-    await expect(this.saveChangesButton).toBeEnabled({ timeout });
-  }
-
   async saveChanges() {
-    await this.waitForSaveChangesButtonEnabled();
     await this.saveChangesButton.click();
   }
 }
