@@ -11,6 +11,7 @@ export interface CreateUserRequest extends UserData {
 
 export interface UserApiResponse {
   id: string;
+  collectionId?: string;
   email: string;
   emailVisibility: boolean;
   verified: boolean;
@@ -26,7 +27,6 @@ export interface EditUserRequest {
   email?: string;
   username?: string;
   name?: string;
-  password?: string;
 }
 
 export interface EditUserResponse {
