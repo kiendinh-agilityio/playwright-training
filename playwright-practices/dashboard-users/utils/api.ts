@@ -1,29 +1,29 @@
 import { Page } from '@playwright/test';
+import { API } from '@/constants';
 
-type WaitForApiOptions = {
-  urlIncludes: string | RegExp;
-  method?: string;
-  status?: number;
-};
-
-export function waitForApiResponse(page: Page, { urlIncludes, method, status }: WaitForApiOptions) {
-  return page.waitForResponse((res) => {
-    const matchesUrl =
-      typeof urlIncludes === 'string'
-        ? res.url().includes(urlIncludes)
-        : urlIncludes.test(res.url());
-    const matchesMethod = method ? res.request().method() === method : true;
-    const matchesStatus = status ? res.status() === status : true;
-    return matchesUrl && matchesMethod && matchesStatus;
+export async function waitForCreateUserResponse(page: Page) {
+  const response = await page.waitForResponse((res) => {
+    const url = res.url();
+    const isUsersCollection = url.includes(API.USERS);
+    const isPost = res.request().method() === 'POST';
+    return isUsersCollection && isPost;
   });
+  return response.json();
 }
 
-export function randomEmail(prefix = 'user') {
-  const unique = Math.random().toString(36).slice(2, 8);
-  return `${prefix}.${unique}@example.com`;
-}
+export async function waitForEditUserRequest(page: Page, recordId?: string) {
+  const request = await page.waitForRequest((req) => {
+    const url = req.url();
+    const isUsersCollection = url.includes(API.USERS);
+    const idMatch = recordId ? url.includes(`/records/${recordId}`) : true;
+    const method = req.method();
+    const isEditMethod = method === 'PATCH' || method === 'PUT';
+    return isUsersCollection && idMatch && isEditMethod;
+  });
 
-export function randomUsername(prefix = 'user') {
-  const unique = Math.random().toString(36).slice(2, 8);
-  return `${prefix}_${unique}`;
+  const response = await request.response();
+  const status = response ? response.status() : 0;
+  const data = response ? await response.json() : {};
+
+  return { status, data };
 }
