@@ -6,7 +6,7 @@ import {
   waitForEditUserRequest,
 } from '@/utils/';
 import { validationTestCases, createRandomUserData } from '@/mocks/userMocks';
-import { UserApiResponse, EditUserResponse } from '@/interfaces';
+import { UserApiResponse, EditUserResponse } from '@/interfaces/user';
 
 test.describe('Users management', () => {
   // Store created user data globally for reuse across tests
@@ -74,6 +74,14 @@ test.describe('Users management', () => {
 
       const table = new TableHelper(usersPage.frame);
       await table.expectRowContains(apiUser.email);
+
+      await test.step('Verify created user row matches API response', async () => {
+        await table.expectRowDataById(apiUser.id, {
+          email: apiUser.email,
+          username: apiUser.username,
+          name: apiUser.name,
+        });
+      });
     });
   });
 
