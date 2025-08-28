@@ -1,29 +1,29 @@
-import { Page } from '@playwright/test';
 import { API } from '@/constants';
+import { Page } from '@playwright/test';
 
-export async function waitForCreateUserResponse(page: Page) {
+type HttpMethodLiteral = 'POST' | 'PUT' | 'PATCH';
+
+const CREATE_METHODS: ReadonlyArray<HttpMethodLiteral> = ['POST'];
+const EDIT_METHODS: ReadonlyArray<HttpMethodLiteral> = ['PATCH', 'PUT', 'POST'];
+
+async function waitForUsersResponseByMethods(
+  page: Page,
+  methods: ReadonlyArray<HttpMethodLiteral>,
+) {
   const response = await page.waitForResponse((res) => {
     const url = res.url();
+    const method = res.request().method();
     const isUsersCollection = url.includes(API.USERS);
-    const isPost = res.request().method() === 'POST';
-    return isUsersCollection && isPost;
+    const isDesiredMethod = (methods as ReadonlyArray<string>).includes(method);
+    return isUsersCollection && isDesiredMethod;
   });
   return response.json();
 }
 
-export async function waitForEditUserRequest(page: Page, recordId?: string) {
-  const request = await page.waitForRequest((req) => {
-    const url = req.url();
-    const isUsersCollection = url.includes(API.USERS);
-    const idMatch = recordId ? url.includes(`/records/${recordId}`) : true;
-    const method = req.method();
-    const isEditMethod = method === 'PATCH' || method === 'PUT';
-    return isUsersCollection && idMatch && isEditMethod;
-  });
+export async function waitForCreateUserResponse(page: Page) {
+  return waitForUsersResponseByMethods(page, CREATE_METHODS);
+}
 
-  const response = await request.response();
-  const status = response ? response.status() : 0;
-  const data = response ? await response.json() : {};
-
-  return { status, data };
+export async function waitForEditUserRequest(page: Page) {
+  return waitForUsersResponseByMethods(page, EDIT_METHODS);
 }
