@@ -30,7 +30,7 @@ test.describe('Users management', () => {
   test.afterEach(async ({ userApi }) => {
     if (createdUserApiResponse?.id) {
       await test.step('Cleanup: delete created user via API', async () => {
-        await userApi.deleteUser(createdUserApiResponse!.id);
+        await userApi.deleteUser(createdUserApiResponse.id);
         createdUserApiResponse = null;
       });
     }
