@@ -1,5 +1,6 @@
 import { FrameLocator, Locator, Page, expect } from '@playwright/test';
 import { IFRAME_SELECTORS } from '@/constants';
+import { TableHelper } from '@/utils/table';
 
 export class UsersPage {
   readonly frame: FrameLocator;
@@ -65,8 +66,30 @@ export class UsersPage {
   }
 
   async openRecordForEditByEmail(email: string) {
-    const row = this.frame.getByRole('table').getByRole('row').filter({ hasText: email }).first();
-    await row.scrollIntoViewIfNeeded();
+    const row = this.frame
+      .getByRole('table')
+      .locator('tbody tr.row-handle')
+      .filter({ hasText: email })
+      .first();
+
+    await expect(row).toBeVisible({ timeout: 30000 });
+    await row.click();
+
+    await expect(this.frame.getByRole('heading', { name: /edit\s*users\s*record/i })).toBeVisible({
+      timeout: 30000,
+    });
+  }
+
+  async openRecordForEditById(id: string) {
+    const table = new TableHelper(this.frame);
+    await table.waitForTableToLoad();
+
+    const row = this.frame
+      .getByRole('table')
+      .locator('tbody tr.row-handle')
+      .filter({ hasText: id })
+      .first();
+    await expect(row).toBeVisible({ timeout: 30000 });
     await row.click();
     await expect(this.frame.getByRole('heading', { name: /edit\s*users\s*record/i })).toBeVisible({
       timeout: 30000,
