@@ -44,14 +44,12 @@ export class TableHelper {
   }
 
   async getCellText(row: Locator, selector: string, emptyIfNA = false): Promise<string> {
-    return row
-      .locator(selector)
-      .textContent()
-      .then((text) => {
-        const value = text ?? '';
-        if (!emptyIfNA) return value;
-        return value === 'N/A' ? '' : value;
-      });
+    await row.scrollIntoViewIfNeeded();
+    const cell = row.locator(selector).first();
+    const text = await cell.textContent();
+    const value = text ?? '';
+    if (!emptyIfNA) return value;
+    return value === 'N/A' ? '' : value;
   }
 
   async getLabelBoolean(row: Locator, selector: string): Promise<boolean> {
@@ -138,7 +136,8 @@ export class TableHelper {
 
   async getNameByRowIndex(index: number): Promise<string> {
     const row = this.getRowByIndex(index);
-    return this.getCellText(row, '.col-field-name .txt', true);
+    // Support both normal text and hint (e.g., N/A) variants
+    return this.getCellText(row, '.col-field-name .txt, .col-field-name .txt-hint', true);
   }
 
   async getAvatarByRowIndex(index: number): Promise<string> {
@@ -155,7 +154,8 @@ export class TableHelper {
 
   async getWebsiteByRowIndex(index: number): Promise<string> {
     const row = this.getRowByIndex(index);
-    return this.getCellText(row, '.col-field-website .txt-hint', true);
+    // Support both normal text and hint (e.g., N/A) variants
+    return this.getCellText(row, '.col-field-website .txt, .col-field-website .txt-hint', true);
   }
 
   async getCreatedByRowIndex(index: number): Promise<string> {
