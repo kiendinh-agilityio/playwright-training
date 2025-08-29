@@ -1,31 +1,27 @@
 import { test } from '@/fixtures/pageFixtures';
 import { TableHelper } from '@/utils/table';
-import { createRandomUserData } from '@/mocks/userMocks';
 
 test.describe('Users delete', () => {
-  async function navigateToUsers(loginPage: any, dashboardPage: any) {
+  let createdUsersForCleanup: { id: string; email: string }[] = [];
+
+  test.beforeEach(async ({ loginPage, dashboardPage }) => {
     await test.step('Navigate to Users page', async () => {
       await loginPage.goto();
       await dashboardPage.assertUsersBreadcrumbVisible();
     });
-  }
+  });
 
-  async function createUsers(userApi: any, count: number) {
-    const created: { id: string; email: string }[] = [];
-    await test.step(`Create ${count} user(s) via API for deletion`, async () => {
-      const timestamp = Date.now();
-      for (let i = 0; i < count; i++) {
-        const base =
-          count === 1
-            ? createRandomUserData('pb', 'pbuser-del-single')
-            : createRandomUserData('pb', `pbuser-del-multi-${i + 1}-${timestamp}`);
-        const payload = { ...base, passwordConfirm: base.password } as const;
-        const res = await userApi.createUser(payload);
-        created.push({ id: res.id, email: res.email });
+  test.afterEach(async ({ userApi }) => {
+    if (!createdUsersForCleanup.length) return;
+
+    await test.step('Cleanup created users from database', async () => {
+      for (const u of createdUsersForCleanup) {
+        await userApi.deleteUser(u.id);
       }
+
+      createdUsersForCleanup = [];
     });
-    return created;
-  }
+  });
 
   const scenarios = [
     {
@@ -49,14 +45,16 @@ test.describe('Users delete', () => {
   ];
 
   for (const scenario of scenarios) {
-    test(scenario.name, async ({ loginPage, dashboardPage, usersPage, userApi }) => {
+    test(scenario.name, async ({ usersPage, createUsers }) => {
       if (scenario.numUsers === 2) {
         test.setTimeout(45000);
       }
 
-      await navigateToUsers(loginPage, dashboardPage);
+      const createdUsers =
+        await test.step(`Create ${scenario.numUsers} user(s) via API for deletion`, async () =>
+          await createUsers(scenario.numUsers));
 
-      const createdUsers = await createUsers(userApi, scenario.numUsers);
+      createdUsersForCleanup = createdUsers;
 
       const table = new TableHelper(usersPage.frame);
       await test.step('Wait for table to load and sort if needed', async () => {
