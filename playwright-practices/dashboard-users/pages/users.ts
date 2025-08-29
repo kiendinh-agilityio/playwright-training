@@ -127,11 +127,10 @@ export class UsersPage {
 
   async confirmDeletion(confirmationRegex: RegExp) {
     const dialog = this.frame.getByText(confirmationRegex);
-    await expect(dialog).toBeVisible({ timeout: 5000 });
+    await expect(dialog).toBeVisible();
     const yesButton = this.frame.getByRole('button', { name: 'Yes' });
     await expect(yesButton).toBeVisible();
     await yesButton.click();
-    await this.frame.locator('body').waitFor({ timeout: 5000 });
   }
 
   async verifyDeletionToast(toast: string | RegExp) {
