@@ -112,4 +112,33 @@ export class UsersPage {
   async saveChanges() {
     await this.saveChangesButton.click();
   }
+
+  async selectRowsBy(users: { id: string; email: string }[], mode: 'email' | 'id') {
+    const tableHelper = new TableHelper(this.frame);
+    await tableHelper.selectRowsByUsers(users, mode);
+  }
+
+  async clickDeleteSelected() {
+    const deleteButton = this.frame.getByRole('button', { name: 'Delete selected' });
+    await expect(deleteButton).toBeVisible({ timeout: 30000 });
+    await expect(deleteButton).toBeEnabled();
+    await deleteButton.click();
+  }
+
+  async confirmDeletion(confirmationRegex: RegExp) {
+    const dialog = this.frame.getByText(confirmationRegex);
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+    const yesButton = this.frame.getByRole('button', { name: 'Yes' });
+    await expect(yesButton).toBeVisible();
+    await yesButton.click();
+    await this.frame.locator('body').waitFor({ timeout: 5000 });
+  }
+
+  async verifyDeletionToast(toast: string | RegExp) {
+    if (typeof toast === 'string') {
+      await this.frame.getByText(toast).isVisible();
+    } else {
+      await expect(this.frame.getByText(toast)).toBeVisible({ timeout: 8000 });
+    }
+  }
 }
