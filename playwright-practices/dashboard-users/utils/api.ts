@@ -1,29 +1,43 @@
 import { API } from '@/constants';
 import { Page } from '@playwright/test';
 
-type HttpMethodLiteral = 'POST' | 'PUT' | 'PATCH';
+type HttpMethodLiteral = 'POST' | 'PUT' | 'PATCH' | 'GET';
 
-const CREATE_METHODS: ReadonlyArray<HttpMethodLiteral> = ['POST'];
-const EDIT_METHODS: ReadonlyArray<HttpMethodLiteral> = ['PATCH', 'PUT', 'POST'];
+const USER_METHODS: Record<string, ReadonlyArray<HttpMethodLiteral>> = {
+  CREATE: ['POST'],
+  EDIT: ['PATCH', 'PUT', 'POST'],
+  GET: ['GET'],
+};
 
 async function waitForUsersResponseByMethods(
   page: Page,
   methods: ReadonlyArray<HttpMethodLiteral>,
+  urlContains?: string,
+  returnJson: boolean = true,
 ) {
-  const response = await page.waitForResponse((res) => {
-    const url = res.url();
-    const method = res.request().method();
-    const isUsersCollection = url.includes(API.USERS);
-    const isDesiredMethod = (methods as ReadonlyArray<string>).includes(method);
-    return isUsersCollection && isDesiredMethod;
-  });
-  return response.json();
+  const response = await page.waitForResponse(
+    (res) => {
+      const responseUrl = res.url();
+      const method = res.request().method();
+      const isUsersCollection = responseUrl.includes(API.USERS);
+      const isDesiredMethod = methods.includes(method as HttpMethodLiteral);
+      const hasUrlContains = urlContains ? responseUrl.includes(urlContains) : true;
+      return isUsersCollection && isDesiredMethod && hasUrlContains;
+    },
+    { timeout: 30000 },
+  );
+
+  return returnJson ? response.json() : response;
 }
 
 export async function waitForCreateUserResponse(page: Page) {
-  return waitForUsersResponseByMethods(page, CREATE_METHODS);
+  return waitForUsersResponseByMethods(page, USER_METHODS.CREATE);
 }
 
 export async function waitForEditUserRequest(page: Page) {
-  return waitForUsersResponseByMethods(page, EDIT_METHODS);
+  return waitForUsersResponseByMethods(page, USER_METHODS.EDIT);
+}
+
+export async function waitForSortResponse({ url, page }: { url: string; page: Page }) {
+  return waitForUsersResponseByMethods(page, USER_METHODS.GET, url, false);
 }
