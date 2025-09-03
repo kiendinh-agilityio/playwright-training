@@ -1,5 +1,5 @@
 import { test, expect } from '@/fixtures/pageFixtures';
-import { TableHelper, getExpectedSortedDesc } from '@/utils';
+import { TableHelper, sortDescending } from '@/utils';
 import { waitForSortResponse } from '@/utils/api';
 
 type Table = {
@@ -46,7 +46,7 @@ test.describe('Sort User Records', () => {
         const responseBody = await response.json();
         const apiData = responseBody.items.map((item) => item[columnName]).filter(isString);
 
-        const expectedSorted = getExpectedSortedDesc(apiData);
+        const expectedSorted = sortDescending(apiData);
         await expect(usersTable.getColumn(columnName)).toBeVisible();
         expect(apiData).toEqual(expectedSorted);
       });
@@ -56,7 +56,7 @@ test.describe('Sort User Records', () => {
         const values = await usersTable.getAllValueCellByColumnName(columnName);
 
         const tableData = values.filter(isString);
-        const expectedSorted = getExpectedSortedDesc(tableData);
+        const expectedSorted = sortDescending(tableData);
         expect(tableData).toEqual(expectedSorted);
       });
     });
