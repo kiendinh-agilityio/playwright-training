@@ -173,10 +173,10 @@ export class UsersPage {
     await this.clearFiltersButton.click();
   }
 
-  async verifySearch(searchTerm: string, expectResults: boolean = true) {
+  async verifySearch(searchTerm: string, hasResults: boolean = true) {
     await expect(this.searchInput.locator('div')).toContainText(searchTerm, { timeout: 10000 });
 
-    if (expectResults) {
+    if (hasResults) {
       const table = this.frame.getByRole('table');
       await expect(table).toBeVisible({ timeout: 10000 });
       const tableRows = table.locator('tbody tr.row-handle');
