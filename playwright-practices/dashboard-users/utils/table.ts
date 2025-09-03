@@ -392,4 +392,59 @@ export class TableHelper {
 
     return rowsData;
   }
+
+  // Get column header locator
+  getColumn(columnName: string): Locator {
+    return this.getTableHeader().locator(`[title="${columnName}"]`);
+  }
+
+  // Get all values from a specific column
+  async getAllValueCellByColumnName(columnName: string): Promise<string[]> {
+    const count = await this.getRowCount();
+    const values: string[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const row = this.getRowByIndex(i);
+      let value: string;
+
+      switch (columnName) {
+        case 'id':
+          value = await this.getCellText(row, '.col-field-id .txt');
+          break;
+        case 'email':
+          value = await this.getCellText(row, '.col-field-email .txt');
+          break;
+        case 'emailVisibility':
+          value = (await this.getLabelBoolean(row, '.col-field-emailVisibility .label')).toString();
+          break;
+        case 'verified':
+          value = (await this.getLabelBoolean(row, '.col-field-verified .label')).toString();
+          break;
+        case 'username':
+          value = await this.getCellText(row, '.col-field-username .txt');
+          break;
+        case 'name':
+          value = await this.getCellText(row, '.col-field-name .txt, .col-field-name .txt-hint', true);
+          break;
+        case 'website':
+          value = await this.getCellText(row, '.col-field-website .txt, .col-field-website .txt-hint', true);
+          break;
+        case 'avatar':
+          value = await this.getAvatarByRowIndex(i);
+          break;
+        case 'created':
+          value = await this.getCreatedByRowIndex(i);
+          break;
+        case 'updated':
+          value = await this.getUpdatedByRowIndex(i);
+          break;
+        default:
+          value = await this.getCellText(row, `.col-field-${columnName} .txt`);
+      }
+
+      values.push(value);
+    }
+
+    return values;
+  }
 }
