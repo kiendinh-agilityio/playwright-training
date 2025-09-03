@@ -398,48 +398,27 @@ export class TableHelper {
     return this.getTableHeader().locator(`[title="${columnName}"]`);
   }
 
-  // Get all values from a specific column
+  async getColumnIndex(columnName: string): Promise<number> {
+    const headerCell = this.getColumn(columnName);
+    await expect(headerCell).toBeVisible();
+    const index = await headerCell.evaluate((el) => (el as HTMLTableCellElement).cellIndex);
+    return index;
+  }
+
   async getAllValueCellByColumnName(columnName: string): Promise<string[]> {
     const count = await this.getRowCount();
     const values: string[] = [];
+    const columnIndex = await this.getColumnIndex(columnName);
 
     for (let i = 0; i < count; i++) {
       const row = this.getRowByIndex(i);
-      let value: string;
+      const cell = row.locator('td').nth(columnIndex);
+      let value = (await cell.innerText()).trim() ?? '';
 
-      switch (columnName) {
-        case 'id':
-          value = await this.getCellText(row, '.col-field-id .txt');
-          break;
-        case 'email':
-          value = await this.getCellText(row, '.col-field-email .txt');
-          break;
-        case 'emailVisibility':
-          value = (await this.getLabelBoolean(row, '.col-field-emailVisibility .label')).toString();
-          break;
-        case 'verified':
-          value = (await this.getLabelBoolean(row, '.col-field-verified .label')).toString();
-          break;
-        case 'username':
-          value = await this.getCellText(row, '.col-field-username .txt');
-          break;
-        case 'name':
-          value = await this.getCellText(row, '.col-field-name .txt, .col-field-name .txt-hint', true);
-          break;
-        case 'website':
-          value = await this.getCellText(row, '.col-field-website .txt, .col-field-website .txt-hint', true);
-          break;
-        case 'avatar':
-          value = await this.getAvatarByRowIndex(i);
-          break;
-        case 'created':
-          value = await this.getCreatedByRowIndex(i);
-          break;
-        case 'updated':
-          value = await this.getUpdatedByRowIndex(i);
-          break;
-        default:
-          value = await this.getCellText(row, `.col-field-${columnName} .txt`);
+      if (columnName === 'emailVisibility') {
+        value = value.toLowerCase();
+      } else if (columnName === 'name' || columnName === 'website') {
+        value = value === 'N/A' ? '' : value;
       }
 
       values.push(value);
