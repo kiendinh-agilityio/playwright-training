@@ -5,7 +5,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
-    "vercel-build": "npx playwright test --reporter=html"
+    "build": "npx playwright test --reporter=html"
   },
   "keywords": [],
   "author": "",
