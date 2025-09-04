@@ -392,4 +392,38 @@ export class TableHelper {
 
     return rowsData;
   }
+
+  // Get column header locator
+  getColumn(columnName: string): Locator {
+    return this.getTableHeader().locator(`[title="${columnName}"]`);
+  }
+
+  async getColumnIndex(columnName: string): Promise<number> {
+    const headerCell = this.getColumn(columnName);
+    await expect(headerCell).toBeVisible();
+    const index = await headerCell.evaluate((el) => (el as HTMLTableCellElement).cellIndex);
+    return index;
+  }
+
+  async getAllValueCellByColumnName(columnName: string): Promise<string[]> {
+    const count = await this.getRowCount();
+    const values: string[] = [];
+    const columnIndex = await this.getColumnIndex(columnName);
+
+    for (let i = 0; i < count; i++) {
+      const row = this.getRowByIndex(i);
+      const cell = row.locator('td').nth(columnIndex);
+      let value = (await cell.innerText()).trim() ?? '';
+
+      if (columnName === 'emailVisibility') {
+        value = value.toLowerCase();
+      } else if (columnName === 'name' || columnName === 'website') {
+        value = value === 'N/A' ? '' : value;
+      }
+
+      values.push(value);
+    }
+
+    return values;
+  }
 }

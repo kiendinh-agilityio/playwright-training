@@ -1,5 +1,5 @@
 import { generateRandom } from '@/utils';
-import { UserData, ValidationTestCase } from '@/interfaces';
+import type { CreateUserRequest, UserData, ValidationTestCase } from '@/interfaces/user';
 
 export const createRandomUserData = (
   emailPrefix: string = 'pb',
@@ -61,5 +61,22 @@ export const validationTestCases: ValidationTestCase[] = [
       password: '12345678',
       passwordConfirm: '87654321',
     },
+  },
+];
+
+export const DATA_USERS: CreateUserRequest[] = [
+  {
+    email: 'test1@gmail.com',
+    username: 'testuser1',
+    name: 'Test User 1',
+    password: '12345678',
+    passwordConfirm: '12345678',
+  },
+  {
+    email: 'test2@gmail.com',
+    username: 'testuser2',
+    name: 'Test User 2',
+    password: '12345678',
+    passwordConfirm: '12345678',
   },
 ];

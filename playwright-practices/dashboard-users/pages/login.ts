@@ -21,7 +21,7 @@ export class LoginPage {
   async goto() {
     await this.page.goto(BASE_URL, { timeout: 60000 });
     await this.page.waitForLoadState('domcontentloaded');
-    await expect(this.page.locator(IFRAME_SELECTORS.DASHBOARD)).toBeVisible({ timeout: 30000 });
+    await expect(this.page.locator(IFRAME_SELECTORS.DASHBOARD)).toBeVisible({ timeout: 60000 });
   }
 
   async login(email: string, password: string) {
