@@ -4,8 +4,9 @@ import {
   TableHelper,
   waitForCreateUserResponse,
   waitForEditUserRequest,
+  createRandomUserData,
 } from '@/utils/';
-import { validationTestCases, createRandomUserData } from '@/mocks/userMocks';
+import { VALIDATION_TEST_CASES } from '@/mocks/userMocks';
 import { UserApiResponse } from '@/interfaces/user';
 
 test.describe('Users management', () => {
@@ -90,7 +91,7 @@ test.describe('Users management', () => {
   });
 
   test.describe('Create validations', () => {
-    for (const testCase of validationTestCases) {
+    for (const testCase of VALIDATION_TEST_CASES) {
       test(testCase.name, async ({ usersPage }) => {
         await test.step('Open create modal', async () => {
           await usersPage.openCreateModal();

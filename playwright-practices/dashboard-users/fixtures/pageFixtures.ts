@@ -1,7 +1,7 @@
 import { test as base, expect } from '@playwright/test';
 import { LoginPage, DashboardPage, UsersPage } from '@/pages';
 import { UserApiClient } from '@/services/services';
-import { createRandomUserData } from '@/mocks/userMocks';
+import { createRandomUserData } from '@/utils/';
 
 type Fixtures = {
   loginPage: LoginPage;
