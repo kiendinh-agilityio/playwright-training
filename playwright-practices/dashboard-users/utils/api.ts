@@ -1,4 +1,4 @@
-import { API } from '@/constants';
+import { USERS_API } from '@/constants';
 import { Page } from '@playwright/test';
 
 type HttpMethod = 'POST' | 'PUT' | 'PATCH' | 'GET';
@@ -19,7 +19,7 @@ async function waitForUsersResponseByMethods(
     (res) => {
       const responseUrl = res.url();
       const method = res.request().method();
-      const isUsersCollection = responseUrl.includes(API.USERS);
+      const isUsersCollection = responseUrl.includes(USERS_API);
       const isDesiredMethod = methods.includes(method as HttpMethod);
       const hasUrlContains = urlContains ? responseUrl.includes(urlContains) : true;
       return isUsersCollection && isDesiredMethod && hasUrlContains;

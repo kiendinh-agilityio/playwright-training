@@ -1,4 +1,4 @@
-import { API } from '@/constants';
+import { USERS_API } from '@/constants';
 import { APIRequestContext } from '@playwright/test';
 import { CreateUserRequest, EditUserRequest, UserApiResponse } from '@/interfaces/user';
 
@@ -10,21 +10,21 @@ export class UserApiClient {
   }
 
   async createUser(payload: CreateUserRequest): Promise<UserApiResponse> {
-    const response = await this.api.post(API.USERS, { data: payload });
+    const response = await this.api.post(USERS_API, { data: payload });
     return (await response.json()) as UserApiResponse;
   }
 
   async updateUser(recordId: string, payload: EditUserRequest): Promise<UserApiResponse> {
-    const response = await this.api.patch(`${API.USERS}/${recordId}`, { data: payload });
+    const response = await this.api.patch(`${USERS_API}/${recordId}`, { data: payload });
     return (await response.json()) as UserApiResponse;
   }
 
   async deleteUser(recordId: string): Promise<void> {
-    await this.api.delete(`${API.USERS}/${recordId}`);
+    await this.api.delete(`${USERS_API}/${recordId}`);
   }
 
   async getUser(recordId: string): Promise<UserApiResponse> {
-    const response = await this.api.get(`${API.USERS}/${recordId}`);
+    const response = await this.api.get(`${USERS_API}/${recordId}`);
     return (await response.json()) as UserApiResponse;
   }
 }
