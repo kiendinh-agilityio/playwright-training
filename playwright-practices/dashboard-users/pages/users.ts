@@ -78,11 +78,16 @@ export class UsersPage {
     await this.createButton.click();
   }
 
-  async openRecordForEditByEmail(email: string) {
+  private async openRecordForEdit(searchValue: string, waitForTable: boolean = false) {
+    if (waitForTable) {
+      const table = new TableHelper(this.frame);
+      await table.waitForTableToLoad();
+    }
+
     const row = this.frame
       .getByRole('table')
       .locator('tbody tr.row-handle')
-      .filter({ hasText: email })
+      .filter({ hasText: searchValue })
       .first();
 
     await expect(row).toBeVisible({ timeout: 30000 });
@@ -93,20 +98,12 @@ export class UsersPage {
     });
   }
 
-  async openRecordForEditById(id: string) {
-    const table = new TableHelper(this.frame);
-    await table.waitForTableToLoad();
+  async openRecordForEditByEmail(email: string) {
+    await this.openRecordForEdit(email);
+  }
 
-    const row = this.frame
-      .getByRole('table')
-      .locator('tbody tr.row-handle')
-      .filter({ hasText: id })
-      .first();
-    await expect(row).toBeVisible({ timeout: 30000 });
-    await row.click();
-    await expect(this.frame.getByRole('heading', { name: /edit\s*users\s*record/i })).toBeVisible({
-      timeout: 30000,
-    });
+  async openRecordForEditById(id: string) {
+    await this.openRecordForEdit(id, true);
   }
 
   async updateUserFields(data: { email?: string }) {
@@ -118,7 +115,6 @@ export class UsersPage {
       await this.emailField.click();
       await this.emailField.fill(data.email);
       await this.emailField.press('Tab');
-      await this.frame.locator('body').waitFor({ timeout: 5000 });
     }
   }
 
