@@ -7,12 +7,11 @@ export class DashboardPage {
 
   constructor(page: Page) {
     this.frame = page.frameLocator(IFRAME_SELECTORS.DASHBOARD);
-    this.breadcrumbUsers = this.frame
-      .getByRole('main')
-      .getByText(BREADCRUMBS.USERS, { exact: true });
+    this.breadcrumbUsers = this.frame.locator('main nav', { hasText: BREADCRUMBS.USERS });
   }
 
   async assertUsersBreadcrumbVisible() {
     await expect(this.breadcrumbUsers).toBeVisible();
+    await expect(this.frame.getByRole('table')).toBeVisible();
   }
 }
