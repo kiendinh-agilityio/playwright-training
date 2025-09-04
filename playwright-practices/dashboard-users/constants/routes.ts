@@ -1,1 +1,1 @@
-export const BASE_URL = 'https://pocketbase.io/demo/';
+export const BASE_URL = `${process.env.BASE_URL}/demo/`;
