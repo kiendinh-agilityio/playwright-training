@@ -41,17 +41,17 @@ test.describe('User Search Functionality', () => {
       clearAction: 'clearFilters' as const,
     },
   ]) {
-    test(name, async ({ usersPage }) => {
+    test(name, async ({ dashboardPage }) => {
       await test.step('Search users', async () => {
-        await usersPage.searchUsers(term);
+        await dashboardPage.searchUsers(term);
       });
 
       await test.step('Verify search results', async () => {
-        await usersPage.verifySearch(term, expectMatch);
+        await dashboardPage.verifySearch(term, expectMatch);
       });
 
       await test.step('Reset to original state', async () => {
-        await usersPage[clearAction]();
+        await dashboardPage[clearAction]();
       });
     });
   }
