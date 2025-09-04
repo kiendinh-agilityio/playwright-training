@@ -5,7 +5,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
-    "build": "npx playwright test --reporter=html"
+    "prebuild": "npx playwright install --with-deps",
+    "build": "playwright test --reporter=html"
   },
   "keywords": [],
   "author": "",
