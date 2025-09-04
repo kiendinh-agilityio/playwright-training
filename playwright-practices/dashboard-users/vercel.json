@@ -1,0 +1,7 @@
+{
+  "builds": [{ "src": "playwright-report/**", "use": "@vercel/static" }],
+  "routes": [
+    { "src": "/", "dest": "/playwright-report/index.html" },
+    { "src": "/(.*)", "dest": "/playwright-report/$1" }
+  ]
+}

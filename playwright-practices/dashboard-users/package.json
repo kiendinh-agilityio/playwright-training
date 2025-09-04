@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "playwright test"
+    "test": "playwright test",
+    "vercel-build": "npx playwright test --reporter=html"
   },
   "keywords": [],
   "author": "",
