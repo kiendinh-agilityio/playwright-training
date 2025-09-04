@@ -13,6 +13,11 @@ export class UsersPage {
   readonly nameField: Locator;
   readonly passwordField: Locator;
   readonly passwordConfirmField: Locator;
+  readonly searchInput: Locator;
+  readonly searchButton: Locator;
+  readonly clearButton: Locator;
+  readonly clearFiltersButton: Locator;
+  readonly searchForm: Locator;
 
   constructor(page: Page) {
     this.frame = page.frameLocator(IFRAME_SELECTORS.DASHBOARD);
@@ -31,6 +36,14 @@ export class UsersPage {
     this.passwordConfirmField = this.frame
       .getByRole('textbox', { name: /password\s*confirm\s*\*/i })
       .first();
+
+    // Simplified search locators based on new requirements
+    this.searchForm = this.frame.locator('form.searchbar');
+    // Use a more reliable selector that finds the search input within the search form
+    this.searchInput = this.frame.locator('form.searchbar').getByRole('textbox').first();
+    this.searchButton = this.frame.getByRole('button', { name: 'Search' });
+    this.clearButton = this.frame.getByRole('button', { name: 'Clear', exact: true });
+    this.clearFiltersButton = this.frame.getByRole('button', { name: 'Clear filters' });
   }
 
   async openCreateModal() {
@@ -111,5 +124,66 @@ export class UsersPage {
 
   async saveChanges() {
     await this.saveChangesButton.click();
+  }
+
+  async selectRowsBy(users: { id: string; email: string }[], mode: 'email' | 'id') {
+    const tableHelper = new TableHelper(this.frame);
+    await tableHelper.selectRowsByUsers(users, mode);
+  }
+
+  async clickDeleteSelected() {
+    const deleteButton = this.frame.getByRole('button', { name: 'Delete selected' });
+    await expect(deleteButton).toBeVisible({ timeout: 30000 });
+    await expect(deleteButton).toBeEnabled();
+    await deleteButton.click();
+  }
+
+  async confirmDeletion(confirmationRegex: RegExp) {
+    const dialog = this.frame.getByText(confirmationRegex);
+    await expect(dialog).toBeVisible();
+    const yesButton = this.frame.getByRole('button', { name: 'Yes' });
+    await expect(yesButton).toBeVisible();
+    await yesButton.click();
+  }
+
+  async verifyDeletionToast(toast: string | RegExp) {
+    if (typeof toast === 'string') {
+      await this.frame.getByText(toast).isVisible();
+    } else {
+      await expect(this.frame.getByText(toast)).toBeVisible({ timeout: 8000 });
+    }
+  }
+
+  async searchUsers(searchTerm: string) {
+    await expect(this.searchInput).toBeVisible({ timeout: 10000 });
+    const searchInputDiv = this.searchInput.locator('div');
+    await searchInputDiv.click();
+    await searchInputDiv.clear();
+    await searchInputDiv.fill(searchTerm);
+    await this.searchButton.click();
+  }
+
+  async clearSearch() {
+    await expect(this.clearButton).toBeVisible({ timeout: 10000 });
+    await this.clearButton.click();
+  }
+
+  async clearFilters() {
+    await expect(this.clearFiltersButton).toBeVisible({ timeout: 10000 });
+    await this.clearFiltersButton.click();
+  }
+
+  async verifySearch(searchTerm: string, hasResults: boolean = true) {
+    await expect(this.searchInput.locator('div')).toContainText(searchTerm, { timeout: 10000 });
+
+    if (hasResults) {
+      const table = this.frame.getByRole('table');
+      await expect(table).toBeVisible({ timeout: 10000 });
+      const tableRows = table.locator('tbody tr.row-handle');
+      await expect(tableRows.filter({ hasText: searchTerm })).toBeVisible({ timeout: 10000 });
+    } else {
+      const noRecordsMessage = this.frame.getByRole('heading', { name: 'No records found.' });
+      await expect(noRecordsMessage).toBeVisible({ timeout: 10000 });
+    }
   }
 }

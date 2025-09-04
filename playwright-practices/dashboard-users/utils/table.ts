@@ -89,6 +89,42 @@ export class TableHelper {
     return this.getTableBodyRows().filter({ hasText: id });
   }
 
+  // Generic: get row by column value
+  async getRowByValue(params: {
+    columnName: string;
+    value: string;
+    requireVisible?: boolean;
+  }): Promise<Locator> {
+    const { columnName, value, requireVisible } = params;
+
+    // Map columnName to column selector
+    const columnToSelector: Record<string, string> = {
+      id: '.col-field-id .txt',
+      email: '.col-field-email .txt',
+      emailVisibility: '.col-field-emailVisibility .label',
+      verified: '.col-field-verified .label',
+      username: '.col-field-username .txt',
+      name: '.col-field-name .txt, .col-field-name .txt-hint',
+      avatar: '.col-field-avatar',
+      website: '.col-field-website .txt, .col-field-website .txt-hint',
+      created: '.col-field-created .datetime',
+      updated: '.col-field-updated .datetime',
+    };
+
+    const selector = columnToSelector[columnName] ?? `.col-field-${columnName} .txt`;
+
+    // Build inner locator from the table to ensure correct scoping and types
+    const inner = this.getTable().locator(selector).filter({ hasText: value });
+
+    const row = this.getTableBodyRows().filter({ has: inner }).first();
+
+    if (requireVisible) {
+      await expect(row).toBeVisible();
+    }
+
+    return row;
+  }
+
   // Checkbox operations
   async selectRowByIndex(index: number): Promise<void> {
     const row = this.getRowByIndex(index);
@@ -242,9 +278,13 @@ export class TableHelper {
   }
 
   // Sorting operations
-  async sortByColumn(columnName: string): Promise<void> {
+  async sortByColumn(columnName: string, direction: 'asc' | 'desc' = 'asc'): Promise<void> {
     const columnHeader = this.getTableHeader().locator(`[title="${columnName}"]`);
     await columnHeader.click();
+
+    if (direction === 'desc') {
+      await columnHeader.click();
+    }
   }
 
   // Validation methods
@@ -289,10 +329,49 @@ export class TableHelper {
     }
   }
 
+  // Bulk select rows by users and mode
+  async selectRowsByUsers(
+    users: { id: string; email: string }[],
+    mode: 'email' | 'id',
+  ): Promise<void> {
+    for (const user of users) {
+      await this.waitForTableToLoad();
+      const locatorFilter = mode === 'email' ? user.email : user.id;
+      const row = this.getTable()
+        .locator('tbody tr.row-handle')
+        .filter({ hasText: locatorFilter })
+        .first();
+      await expect(row).toBeVisible({ timeout: mode === 'email' ? 30000 : 15000 });
+      await row.scrollIntoViewIfNeeded();
+      const checkboxInput = row.locator('.bulk-select-col input[type="checkbox"]');
+      const label = row.locator('.bulk-select-col label');
+      if (mode === 'email') {
+        await label.click();
+        await this.getTable().locator('tbody').waitFor({ timeout: 2000 });
+      } else {
+        if (!(await checkboxInput.isChecked())) {
+          await label.click();
+        }
+        await expect(checkboxInput).toBeChecked();
+      }
+    }
+    const checked = this.getTable().locator('.bulk-select-col input[type="checkbox"]:checked');
+    await expect(checked).toHaveCount(users.length);
+  }
+
   // Wait for table to load
   async waitForTableToLoad(): Promise<void> {
     await expect(this.getTable()).toBeVisible();
-    await expect(this.getTableBodyRows().first()).toBeVisible({ timeout: 10000 });
+
+    // Wait for table to be ready, but don't require rows to exist
+    // Table might be empty initially
+    await this.getTable().waitFor({ timeout: 10000 });
+
+    // Check if table has any rows, but don't fail if it's empty
+    const rowCount = await this.getRowCount();
+    if (rowCount > 0) {
+      await expect(this.getTableBodyRows().first()).toBeVisible({ timeout: 5000 });
+    }
   }
 
   // Check if table is empty
@@ -312,5 +391,39 @@ export class TableHelper {
     }
 
     return rowsData;
+  }
+
+  // Get column header locator
+  getColumn(columnName: string): Locator {
+    return this.getTableHeader().locator(`[title="${columnName}"]`);
+  }
+
+  async getColumnIndex(columnName: string): Promise<number> {
+    const headerCell = this.getColumn(columnName);
+    await expect(headerCell).toBeVisible();
+    const index = await headerCell.evaluate((el) => (el as HTMLTableCellElement).cellIndex);
+    return index;
+  }
+
+  async getAllValueCellByColumnName(columnName: string): Promise<string[]> {
+    const count = await this.getRowCount();
+    const values: string[] = [];
+    const columnIndex = await this.getColumnIndex(columnName);
+
+    for (let i = 0; i < count; i++) {
+      const row = this.getRowByIndex(i);
+      const cell = row.locator('td').nth(columnIndex);
+      let value = (await cell.innerText()).trim() ?? '';
+
+      if (columnName === 'emailVisibility') {
+        value = value.toLowerCase();
+      } else if (columnName === 'name' || columnName === 'website') {
+        value = value === 'N/A' ? '' : value;
+      }
+
+      values.push(value);
+    }
+
+    return values;
   }
 }
