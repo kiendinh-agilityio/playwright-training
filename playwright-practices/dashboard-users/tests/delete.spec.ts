@@ -1,8 +1,8 @@
-import { test } from '@/fixtures/pageFixtures';
+import { userFixtures as test } from '@/fixtures/userFixtures';
 import { TableHelper } from '@/utils/table';
 
 test.describe('Users delete', () => {
-  let createdUsersForCleanup: { id: string; email: string }[] = [];
+  let cleanupFunctions: (() => Promise<void>)[] = [];
 
   test.beforeEach(async ({ loginPage, dashboardPage }) => {
     await test.step('Navigate to Users page', async () => {
@@ -11,16 +11,15 @@ test.describe('Users delete', () => {
     });
   });
 
-  test.afterEach(async ({ userApi }) => {
-    if (!createdUsersForCleanup.length) return;
-
-    await test.step('Cleanup created users from database', async () => {
-      for (const u of createdUsersForCleanup) {
-        await userApi.deleteUser(u.id);
-      }
-
-      createdUsersForCleanup = [];
-    });
+  test.afterEach(async () => {
+    if (cleanupFunctions.length > 0) {
+      await test.step('Cleanup: delete created users', async () => {
+        for (const cleanup of cleanupFunctions) {
+          await cleanup();
+        }
+        cleanupFunctions = [];
+      });
+    }
   });
 
   const scenarios = [
@@ -50,11 +49,9 @@ test.describe('Users delete', () => {
         test.setTimeout(45000);
       }
 
-      const createdUsers =
+      const { users: createdUsers, cleanup } =
         await test.step(`Create ${scenario.numUsers} user(s) via API for deletion`, async () =>
           await createUsers(scenario.numUsers));
-
-      createdUsersForCleanup = createdUsers;
 
       const table = new TableHelper(usersPage.frame);
       await test.step('Wait for table to load and sort if needed', async () => {
@@ -79,6 +76,8 @@ test.describe('Users delete', () => {
       await test.step('Verify deletion result', async () => {
         await usersPage.verifyDeletionToast(scenario.toast);
       });
+
+      cleanupFunctions.push(cleanup);
     });
   }
 });
