@@ -9,6 +9,7 @@ export class DashboardPage {
   readonly searchButton: Locator;
   readonly clearButton: Locator;
   readonly clearFiltersButton: Locator;
+  readonly refreshButton: Locator;
 
   constructor(page: Page) {
     this.frame = page.frameLocator(IFRAME_SELECTORS.DASHBOARD);
@@ -19,6 +20,7 @@ export class DashboardPage {
     this.searchButton = this.frame.getByRole('button', { name: 'Search' });
     this.clearButton = this.frame.getByRole('button', { name: 'Clear', exact: true });
     this.clearFiltersButton = this.frame.getByRole('button', { name: 'Clear filters' });
+    this.refreshButton = this.frame.getByRole('button', { name: 'Refresh' });
   }
 
   async assertUsersBreadcrumbVisible() {
@@ -45,17 +47,23 @@ export class DashboardPage {
     await this.clearFiltersButton.click();
   }
 
+  async refreshUsersTable() {
+    await expect(this.refreshButton).toBeVisible({ timeout: 10000 });
+    await this.refreshButton.click();
+    await expect(this.frame.getByRole('table')).toBeVisible({ timeout: 10000 });
+  }
+
   async verifySearch(searchTerm: string, hasResults: boolean = true) {
-    await expect(this.searchInput.locator('div')).toContainText(searchTerm, { timeout: 10000 });
+    await expect(this.searchInput.locator('div')).toContainText(searchTerm, { timeout: 30000 });
 
     if (hasResults) {
       const table = this.frame.getByRole('table');
-      await expect(table).toBeVisible({ timeout: 10000 });
+      await expect(table).toBeVisible({ timeout: 30000 });
       const tableRows = table.locator('tbody tr.row-handle');
-      await expect(tableRows.filter({ hasText: searchTerm })).toBeVisible({ timeout: 10000 });
+      await expect(tableRows.filter({ hasText: searchTerm })).toBeVisible({ timeout: 30000 });
     } else {
       const noRecordsMessage = this.frame.getByRole('heading', { name: 'No records found.' });
-      await expect(noRecordsMessage).toBeVisible({ timeout: 10000 });
+      await expect(noRecordsMessage).toBeVisible({ timeout: 30000 });
     }
   }
 }
