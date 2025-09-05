@@ -20,7 +20,18 @@ export class UserApiClient {
   }
 
   async deleteUser(recordId: string): Promise<void> {
-    await this.api.delete(`${USERS_API}/${recordId}`);
+    try {
+      const response = await this.api.delete(`${USERS_API}/${recordId}`);
+      if (!response.ok()) {
+        const body = await response.text();
+        throw new Error(
+          `Failed to delete user ${recordId}: ${response.status()} ${response.statusText()} - ${body}`,
+        );
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`deleteUser error for ${recordId}: ${message}`);
+    }
   }
 
   async getUser(recordId: string): Promise<UserApiResponse> {
