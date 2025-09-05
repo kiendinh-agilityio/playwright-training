@@ -1,4 +1,4 @@
-import { test } from '@/fixtures/pageFixtures';
+import { userFixtures as test } from '@/fixtures/userFixtures';
 import { DATA_USERS } from '@/mocks';
 
 test.describe('User Search Functionality', () => {
