@@ -1,10 +1,12 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, APIRequestContext } from '@playwright/test';
 import { LoginPage, DashboardPage, UsersPage } from '@/pages';
+import { extractAccessToken } from '@/utils/api';
 
 type PageFixtures = {
   loginPage: LoginPage;
   dashboardPage: DashboardPage;
   usersPage: UsersPage;
+  apiContext: APIRequestContext;
 };
 
 export const test = base.extend<PageFixtures>({
@@ -22,6 +24,19 @@ export const test = base.extend<PageFixtures>({
   usersPage: async ({ page }, use) => {
     const users = new UsersPage(page);
     await use(users);
+  },
+
+  apiContext: async ({ playwright }, use) => {
+    const token = extractAccessToken();
+    const context = await playwright.request.newContext({
+      baseURL: process.env.BASE_URL,
+      extraHTTPHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await use(context);
+    await context.dispose();
   },
 });
 
