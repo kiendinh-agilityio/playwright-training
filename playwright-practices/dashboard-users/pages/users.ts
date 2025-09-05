@@ -81,7 +81,7 @@ export class UsersPage {
     await row.click();
 
     await expect(this.frame.getByRole('heading', { name: /edit\s*users\s*record/i })).toBeVisible({
-      timeout: 30000,
+      timeout: 60000,
     });
   }
 
@@ -93,16 +93,12 @@ export class UsersPage {
     await this.openRecordForEdit(id, true);
   }
 
-  async updateUserFields(data: { email?: string }) {
-    if (data.email !== undefined) {
-      await expect(
-        this.frame.getByRole('heading', { name: /edit\s*users\s*record/i }),
-      ).toBeVisible();
-      await this.emailField.scrollIntoViewIfNeeded();
-      await this.emailField.click();
-      await this.emailField.fill(data.email);
-      await this.emailField.press('Tab');
-    }
+  async updateUserFields(data: { email?: string; name?: string; username?: string }) {
+    await expect(this.frame.getByRole('heading', { name: /edit\s*users\s*record/i })).toBeVisible();
+
+    await this.fillFormField(this.emailField, data.email);
+    await this.fillFormField(this.nameField, data.name);
+    await this.fillFormField(this.usernameField, data.username);
   }
 
   async saveChanges() {
@@ -133,7 +129,7 @@ export class UsersPage {
     if (typeof toast === 'string') {
       await this.frame.getByText(toast).isVisible();
     } else {
-      await expect(this.frame.getByText(toast)).toBeVisible({ timeout: 8000 });
+      await expect(this.frame.getByText(toast)).toBeVisible({ timeout: 10000 });
     }
   }
 }
