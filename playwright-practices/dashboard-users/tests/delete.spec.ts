@@ -29,7 +29,7 @@ test.describe('Users delete', () => {
       selectMode: 'email' as const,
       confirm: /do you really want to delete the selected record/i,
       toast: 'Successfully deleted the selected record.' as const,
-      sortBeforeSelect: false,
+      sortBeforeSelect: true,
       verifyAbsenceAndApi: true,
     },
     {
