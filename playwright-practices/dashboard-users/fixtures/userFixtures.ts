@@ -11,8 +11,8 @@ export type UserFixtures = {
 };
 
 export const userFixtures = test.extend<UserFixtures>({
-  userApi: async ({ request }, use) => {
-    const client = new UserApiClient(request);
+  userApi: async ({ apiContext }, use) => {
+    const client = new UserApiClient(apiContext);
     await use(client);
   },
 
@@ -39,7 +39,14 @@ export const userFixtures = test.extend<UserFixtures>({
         users,
         cleanup: async () => {
           for (const user of users) {
-            await userApi.deleteUser(user.id);
+            try {
+              await userApi.deleteUser(user.id);
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              // Ignore if already deleted via UI (404 Not Found)
+              if (message.includes('404')) continue;
+              throw err;
+            }
           }
         },
       };
