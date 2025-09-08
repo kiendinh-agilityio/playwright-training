@@ -9,7 +9,7 @@ import {
 } from '@/utils/';
 import { VALIDATION_TEST_CASES } from '@/mocks/users';
 import { UserApiResponse } from '@/interfaces/user';
-import { UserApiClient } from '@/services/services';
+import { UserApiClient } from '@/services/user';
 
 test.describe('Users management', () => {
   let userId: string | undefined;

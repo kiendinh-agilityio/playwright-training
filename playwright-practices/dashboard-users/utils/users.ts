@@ -1,5 +1,5 @@
 import { APIRequestContext } from '@playwright/test';
-import { UserApiClient } from '@/services/services';
+import { UserApiClient } from '@/services/user';
 import { UserApiResponse, UserData } from '@/interfaces/user';
 
 type CredentialType = 'email' | 'username';

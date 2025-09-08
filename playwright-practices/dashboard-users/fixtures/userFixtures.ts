@@ -1,5 +1,5 @@
 import { test } from './pageFixtures';
-import { UserApiClient } from '@/services/services';
+import { UserApiClient } from '@/services/user';
 import { createUsers, getUserDeletePromises } from '@/utils/';
 import { UserApiResponse } from '@/interfaces/user';
 
