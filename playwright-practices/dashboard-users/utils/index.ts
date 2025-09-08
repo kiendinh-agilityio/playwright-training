@@ -4,3 +4,4 @@ export * from './modalActions';
 export * from './generators';
 export * from './sort';
 export * from './createUser';
+export * from './createMultipleUsers';
