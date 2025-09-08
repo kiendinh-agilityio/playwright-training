@@ -21,16 +21,24 @@ export const userFixtures = test.extend<UserFixtures>({
    * @param {DashboardPage} context.dashboardPage - The dashboard page.
    * @param {Function} use - A callback function to use the seeded users.
    */
-  seededUsers: async ({ apiContext, dashboardPage }, use) => {
+  seededUsers: async ({ apiContext }, use) => {
     const users = await createMultipleUsers(apiContext, 3, 'del-multi');
 
     await use(users);
 
-    // Cleanup: delete users
+    // Cleanup: check existence before deleting users
     const userApi = new UserApiClient(apiContext);
-    const deletePromises = users
-      .filter((user) => user && user.id)
-      .map((user) => userApi.deleteUser(user.id));
+    const candidates = users.filter((user) => user && user.id);
+
+    const existingIdResults = await Promise.allSettled(
+      candidates.map((user) => userApi.getUser(user.id).then(() => user.id)),
+    );
+
+    const existingIds = existingIdResults
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+      .map((r) => r.value);
+
+    const deletePromises = existingIds.map((id) => userApi.deleteUser(id));
 
     const results = await Promise.allSettled(deletePromises);
 
@@ -39,7 +47,5 @@ export const userFixtures = test.extend<UserFixtures>({
         throw result.reason;
       }
     }
-
-    await dashboardPage.refreshUsersTable();
   },
 });
