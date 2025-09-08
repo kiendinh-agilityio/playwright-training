@@ -1,27 +1,17 @@
-import { test, APIRequestContext } from '@playwright/test';
+import { APIRequestContext } from '@playwright/test';
 import { UserApiClient } from '@/services/services';
 import { UserApiResponse, UserData } from '@/interfaces/user';
 
-const generateUniqueString = (length = 6): string =>
-  Math.random()
-    .toString(36)
-    .slice(2, 2 + length);
+type CredentialType = 'email' | 'username';
 
-type RandomType = 'email' | 'username';
-
-export const generateRandom = (type: RandomType, prefix = 'user'): string => {
-  const unique = generateUniqueString();
-  if (type === 'email') return `${prefix}.${unique}@example.com`;
-
-  return `${prefix}_${unique}`;
+export const generateUniqueCredential = (type: CredentialType, prefix = 'user'): string => {
+  const unique = Date.now().toString(36);
+  return type === 'email' ? `${prefix}.${unique}@example.com` : `${prefix}_${unique}`;
 };
 
-export const createRandomUserData = (
-  emailPrefix: string = 'pb',
-  usernamePrefix: string = 'pbuser',
-): UserData => ({
-  email: generateRandom('email', emailPrefix),
-  username: generateRandom('username', usernamePrefix),
+export const createUniqueUserData = (emailPrefix = 'pb', usernamePrefix = 'pbuser'): UserData => ({
+  email: generateUniqueCredential('email', emailPrefix),
+  username: generateUniqueCredential('username', usernamePrefix),
   password: '12345678',
   name: 'Playwright User',
 });
@@ -35,32 +25,45 @@ export const createRandomUserData = (
  * @param specialString - An optional string to include in the email and username.
  * @returns A promise that resolves to an array of created user objects.
  */
-export const createMultipleUsers = async (
+export const createUsers = async (
   request: APIRequestContext,
   count: number,
-  specialString?: string,
 ): Promise<UserApiResponse[]> => {
-  const randomId = Math.floor(Math.random() * 1000000).toString();
-  const workerIndex = test.info().workerIndex;
   const userApi = new UserApiClient(request);
 
   const userPromises = Array.from({ length: count }, (_, i) => {
-    const uniqueSuffix = `${workerIndex}_${Date.now()}_${randomId}_${i}`;
+    const suffix = `${Date.now()}_${i}`;
+    const base = createUniqueUserData('pb', `pbuser-${suffix}`);
 
-    const base = createRandomUserData(
-      'pb',
-      `pbuser-${uniqueSuffix}${specialString ? `-${specialString}` : ''}`,
-    );
     const payload = {
       ...base,
       passwordConfirm: base.password,
-      email: `pbuser-${uniqueSuffix}${specialString ? `-${specialString}` : ''}@example.com`,
-      username: `pbuser-${uniqueSuffix}${specialString ? `-${specialString}` : ''}`,
-      name: `PB User ${uniqueSuffix}${specialString ? ` ${specialString}` : ''}`,
+      email: `pbuser-${suffix}@example.com`,
+      username: `pbuser-${suffix}`,
+      name: `PB User ${suffix}`,
     } as const;
 
     return userApi.createUser(payload);
   });
 
   return Promise.all(userPromises);
+};
+
+export const getUserDeletePromises = async (
+  request: APIRequestContext,
+  users: UserApiResponse[],
+): Promise<Promise<void>[]> => {
+  const userApi = new UserApiClient(request);
+  const candidates = users.filter((user) => user && user.id);
+
+  const existingIdResults = await Promise.allSettled(
+    candidates.map((user) => userApi.getUser(user.id).then(() => user.id)),
+  );
+
+  const existingIds = existingIdResults
+    .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+    .map((r) => r.value);
+
+  const deletePromises = existingIds.map((id) => userApi.deleteUser(id));
+  return deletePromises;
 };
