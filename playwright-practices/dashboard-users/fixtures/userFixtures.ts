@@ -1,13 +1,11 @@
 import { test } from './pageFixtures';
 import { UserApiClient } from '@/services/services';
-import { createRandomUserData } from '@/utils/';
+import { createMultipleUsers } from '@/utils/';
+import { UserApiResponse } from '@/interfaces/user';
 
 export type UserFixtures = {
   userApi: UserApiClient;
-  createUsers: (count: number) => Promise<{
-    users: { id: string; email: string }[];
-    cleanup: () => Promise<void>;
-  }>;
+  seededUsers: UserApiResponse[];
 };
 
 export const userFixtures = test.extend<UserFixtures>({
@@ -16,42 +14,32 @@ export const userFixtures = test.extend<UserFixtures>({
     await use(client);
   },
 
-  createUsers: async ({ userApi }, use) => {
-    const generateUsers = async (count: number) => {
-      const created: { id: string; email: string }[] = [];
-      const timestamp = Date.now();
-      for (let i = 0; i < count; i++) {
-        const base =
-          count === 1
-            ? createRandomUserData('pb', 'pbuser-del-single')
-            : createRandomUserData('pb', `pbuser-del-multi-${i + 1}-${timestamp}`);
-        const payload = { ...base, passwordConfirm: base.password } as const;
-        const res = await userApi.createUser(payload);
-        created.push({ id: res.id, email: res.email });
+  /**
+   * Seeds the dashboard with three users, and automatically deletes them after use.
+   * @param {Object} context - The test context.
+   * @param {APIRequestContext} context.apiContext - The API request context.
+   * @param {DashboardPage} context.dashboardPage - The dashboard page.
+   * @param {Function} use - A callback function to use the seeded users.
+   */
+  seededUsers: async ({ apiContext, dashboardPage }, use) => {
+    const users = await createMultipleUsers(apiContext, 3, 'del-multi');
+
+    await use(users);
+
+    // Cleanup: delete users
+    const userApi = new UserApiClient(apiContext);
+    const deletePromises = users
+      .filter((user) => user && user.id)
+      .map((user) => userApi.deleteUser(user.id));
+
+    const results = await Promise.allSettled(deletePromises);
+
+    for (const result of results) {
+      if (result.status === 'rejected' && !result.reason.message.includes('404')) {
+        throw result.reason;
       }
-      return created;
-    };
+    }
 
-    const createUsersWithCleanup = async (count: number) => {
-      const users = await generateUsers(count);
-
-      return {
-        users,
-        cleanup: async () => {
-          for (const user of users) {
-            try {
-              await userApi.deleteUser(user.id);
-            } catch (err) {
-              const message = err instanceof Error ? err.message : String(err);
-              // Ignore if already deleted via UI (404 Not Found)
-              if (message.includes('404')) continue;
-              throw err;
-            }
-          }
-        },
-      };
-    };
-
-    await use(createUsersWithCleanup);
+    await dashboardPage.refreshUsersTable();
   },
 });
