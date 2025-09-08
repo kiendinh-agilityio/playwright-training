@@ -5,7 +5,7 @@ import {
   TableHelper,
   waitForCreateUserResponse,
   waitForEditUserRequest,
-  createRandomUserData,
+  createUniqueUserData,
 } from '@/utils/';
 import { VALIDATION_TEST_CASES } from '@/mocks/users';
 import { UserApiResponse } from '@/interfaces/user';
@@ -52,7 +52,7 @@ test.describe('Users management', () => {
     page,
     usersPage,
   }) => {
-    const testData = createRandomUserData('pb', 'pbuser');
+    const testData = createUniqueUserData('pb', 'pbuser');
 
     await test.step('Open New record modal', async () => {
       await usersPage.openCreateModal();
@@ -115,7 +115,7 @@ test.describe('Users management', () => {
     dashboardPage,
     seededUsers,
   }) => {
-    const updatedData = createRandomUserData('pb', 'pbuser-updated');
+    const updatedData = createUniqueUserData('pb', 'pbuser-updated');
     const newEmail = updatedData.email;
     const newName = updatedData.name;
     const newUsername = updatedData.username;
