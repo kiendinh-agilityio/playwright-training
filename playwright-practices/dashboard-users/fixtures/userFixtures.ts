@@ -1,6 +1,6 @@
 import { test } from './pageFixtures';
 import { UserApiClient } from '@/services/services';
-import { createMultipleUsers } from '@/utils/';
+import { createUsers, getUserDeletePromises } from '@/utils/';
 import { UserApiResponse } from '@/interfaces/user';
 
 export type UserFixtures = {
@@ -22,30 +22,12 @@ export const userFixtures = test.extend<UserFixtures>({
    * @param {Function} use - A callback function to use the seeded users.
    */
   seededUsers: async ({ apiContext }, use) => {
-    const users = await createMultipleUsers(apiContext, 3, 'del-multi');
+    const users = await createUsers(apiContext, 3);
 
     await use(users);
 
     // Cleanup: check existence before deleting users
-    const userApi = new UserApiClient(apiContext);
-    const candidates = users.filter((user) => user && user.id);
-
-    const existingIdResults = await Promise.allSettled(
-      candidates.map((user) => userApi.getUser(user.id).then(() => user.id)),
-    );
-
-    const existingIds = existingIdResults
-      .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
-      .map((r) => r.value);
-
-    const deletePromises = existingIds.map((id) => userApi.deleteUser(id));
-
-    const results = await Promise.allSettled(deletePromises);
-
-    for (const result of results) {
-      if (result.status === 'rejected' && !result.reason.message.includes('404')) {
-        throw result.reason;
-      }
-    }
+    const deletePromises = await getUserDeletePromises(apiContext, users);
+    await Promise.allSettled(deletePromises);
   },
 });
