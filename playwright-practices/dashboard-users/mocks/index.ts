@@ -1,1 +1,1 @@
-export * from './userMocks';
+export * from './users';
