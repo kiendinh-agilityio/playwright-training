@@ -9,9 +9,10 @@ import {
 } from '@/utils/';
 import { VALIDATION_TEST_CASES } from '@/mocks/userMocks';
 import { UserApiResponse } from '@/interfaces/user';
+import { UserApiClient } from '@/services/services';
 
 test.describe('Users management', () => {
-  let cleanupFunctions: (() => Promise<void>)[] = [];
+  let userId: string | undefined;
 
   test.beforeEach(async ({ loginPage, dashboardPage }) => {
     await test.step('Login and navigate to users page', async () => {
@@ -20,14 +21,16 @@ test.describe('Users management', () => {
     });
   });
 
-  test.afterEach(async () => {
-    if (cleanupFunctions.length > 0) {
-      await test.step('Cleanup: delete created users', async () => {
-        for (const cleanup of cleanupFunctions) {
-          await cleanup();
-        }
-        cleanupFunctions = [];
-      });
+  test.afterEach(async ({ apiContext, dashboardPage, usersPage }) => {
+    if (userId) {
+      const userApi = new UserApiClient(apiContext);
+      await userApi.deleteUser(userId);
+      await dashboardPage.refreshUsersTable();
+
+      const table = new TableHelper(usersPage.frame);
+      await table.waitForTableToLoad();
+
+      userId = undefined;
     }
   });
 
@@ -48,7 +51,6 @@ test.describe('Users management', () => {
   test('Verify that a user can add a new user to the table successfully', async ({
     page,
     usersPage,
-    userApi,
   }) => {
     const testData = createRandomUserData('pb', 'pbuser');
 
@@ -84,9 +86,7 @@ test.describe('Users management', () => {
         });
       });
 
-      cleanupFunctions.push(async () => {
-        await userApi.deleteUser(apiUser.id);
-      });
+      userId = apiUser.id;
     });
   });
 
@@ -113,7 +113,7 @@ test.describe('Users management', () => {
     page,
     usersPage,
     dashboardPage,
-    createUsers,
+    seededUsers,
   }) => {
     const updatedData = createRandomUserData('pb', 'pbuser-updated');
     const newEmail = updatedData.email;
@@ -121,13 +121,11 @@ test.describe('Users management', () => {
     const newUsername = updatedData.username;
     let updatedUser: UserApiResponse;
 
-    const { users, cleanup } = await createUsers(1);
-
     await test.step('Refresh table to fetch newly created record', async () => {
       await dashboardPage.refreshUsersTable();
     });
 
-    const userToEdit = users[0];
+    const userToEdit = seededUsers[0];
 
     await test.step('Open the user for editing using email', async () => {
       await usersPage.openRecordForEditByEmail(userToEdit.email);
@@ -158,7 +156,5 @@ test.describe('Users management', () => {
       expect(uiRow.username).toBe(updatedUser.username);
       expect(uiRow.name).toBe(updatedUser.name);
     });
-
-    cleanupFunctions.push(cleanup);
   });
 });
