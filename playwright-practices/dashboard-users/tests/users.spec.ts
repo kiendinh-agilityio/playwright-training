@@ -7,7 +7,7 @@ import {
   waitForEditUserRequest,
   createRandomUserData,
 } from '@/utils/';
-import { VALIDATION_TEST_CASES } from '@/mocks/userMocks';
+import { VALIDATION_TEST_CASES } from '@/mocks/users';
 import { UserApiResponse } from '@/interfaces/user';
 import { UserApiClient } from '@/services/services';
 

@@ -1,7 +1,30 @@
 import { test, APIRequestContext } from '@playwright/test';
 import { UserApiClient } from '@/services/services';
-import { createRandomUserData } from '@/utils/';
-import { UserApiResponse } from '@/interfaces/user';
+import { UserApiResponse, UserData } from '@/interfaces/user';
+
+const generateUniqueString = (length = 6): string =>
+  Math.random()
+    .toString(36)
+    .slice(2, 2 + length);
+
+type RandomType = 'email' | 'username';
+
+export const generateRandom = (type: RandomType, prefix = 'user'): string => {
+  const unique = generateUniqueString();
+  if (type === 'email') return `${prefix}.${unique}@example.com`;
+
+  return `${prefix}_${unique}`;
+};
+
+export const createRandomUserData = (
+  emailPrefix: string = 'pb',
+  usernamePrefix: string = 'pbuser',
+): UserData => ({
+  email: generateRandom('email', emailPrefix),
+  username: generateRandom('username', usernamePrefix),
+  password: '12345678',
+  name: 'Playwright User',
+});
 
 /**
  * Creates a specified number of unique users via the API for testing purposes.
