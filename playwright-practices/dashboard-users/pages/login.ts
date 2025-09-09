@@ -1,5 +1,5 @@
 import { Page, Locator, FrameLocator, expect } from '@playwright/test';
-import { BASE_URL, IFRAME_SELECTORS } from '@/constants';
+import { IFRAME_SELECTORS } from '@/constants';
 
 export class LoginPage {
   readonly page: Page;
@@ -19,7 +19,7 @@ export class LoginPage {
   }
 
   async goto() {
-    await this.page.goto(BASE_URL, { timeout: 60000 });
+    await this.page.goto('', { timeout: 60000 });
     await this.page.waitForLoadState('domcontentloaded');
     await expect(this.page.locator(IFRAME_SELECTORS.DASHBOARD)).toBeVisible({ timeout: 60000 });
   }

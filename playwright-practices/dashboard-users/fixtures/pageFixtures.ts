@@ -1,17 +1,15 @@
-import { test as base, expect } from '@playwright/test';
+import { test as base, expect, APIRequestContext } from '@playwright/test';
 import { LoginPage, DashboardPage, UsersPage } from '@/pages';
-import { UserApiClient } from '@/services/UserApiClient';
-import { createRandomUserData } from '@/mocks/userMocks';
+import { extractAccessToken } from '@/utils/api';
 
-type Fixtures = {
+type PageFixtures = {
   loginPage: LoginPage;
   dashboardPage: DashboardPage;
   usersPage: UsersPage;
-  userApi: UserApiClient;
-  createUsers: (count: number) => Promise<{ id: string; email: string }[]>;
+  apiContext: APIRequestContext;
 };
 
-export const test = base.extend<Fixtures>({
+export const test = base.extend<PageFixtures>({
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
@@ -28,28 +26,17 @@ export const test = base.extend<Fixtures>({
     await use(users);
   },
 
-  userApi: async ({ request }, use) => {
-    const client = new UserApiClient(request);
-    await use(client);
-  },
+  apiContext: async ({ playwright }, use) => {
+    const token = extractAccessToken();
+    const context = await playwright.request.newContext({
+      baseURL: process.env.BASE_URL,
+      extraHTTPHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  createUsers: async ({ userApi }, use) => {
-    const generateUsers = async (count: number) => {
-      const created: { id: string; email: string }[] = [];
-      const timestamp = Date.now();
-      for (let i = 0; i < count; i++) {
-        const base =
-          count === 1
-            ? createRandomUserData('pb', 'pbuser-del-single')
-            : createRandomUserData('pb', `pbuser-del-multi-${i + 1}-${timestamp}`);
-        const payload = { ...base, passwordConfirm: base.password } as const;
-        const res = await userApi.createUser(payload);
-        created.push({ id: res.id, email: res.email });
-      }
-      return created;
-    };
-
-    await use(generateUsers);
+    await use(context);
+    await context.dispose();
   },
 });
 

@@ -1,4 +1,5 @@
-import { test, expect } from '@/fixtures/pageFixtures';
+import { userFixtures as test } from '@/fixtures/userFixtures';
+import { expect } from '@/fixtures/pageFixtures';
 import { TableHelper, sortDescending } from '@/utils';
 import { waitForSortResponse } from '@/utils/api';
 

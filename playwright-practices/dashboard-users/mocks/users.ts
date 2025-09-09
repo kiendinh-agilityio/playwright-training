@@ -1,17 +1,6 @@
-import { generateRandom } from '@/utils';
-import type { CreateUserRequest, UserData, ValidationTestCase } from '@/interfaces/user';
+import type { CreateUserRequest, ValidationTestCase } from '@/interfaces/user';
 
-export const createRandomUserData = (
-  emailPrefix: string = 'pb',
-  usernamePrefix: string = 'pbuser',
-): UserData => ({
-  email: generateRandom('email', emailPrefix),
-  username: generateRandom('username', usernamePrefix),
-  password: '12345678',
-  name: 'Playwright User',
-});
-
-export const validationTestCases: ValidationTestCase[] = [
+export const VALIDATION_TEST_CASES: ValidationTestCase[] = [
   {
     name: 'Should show validation error when email is empty',
     data: {
