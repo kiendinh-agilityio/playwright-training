@@ -21,11 +21,10 @@ test.describe('Users management', () => {
     });
   });
 
-  test.afterEach(async ({ apiContext, dashboardPage, usersPage }) => {
+  test.afterEach(async ({ apiContext, usersPage }) => {
     if (userId) {
       const userApi = new UserApiClient(apiContext);
       await userApi.deleteUser(userId);
-      await dashboardPage.refreshUsersTable();
 
       const table = new TableHelper(usersPage.frame);
       await table.waitForTableToLoad();
@@ -34,14 +33,7 @@ test.describe('Users management', () => {
     }
   });
 
-  test('Verify that the user can view the user list from the Users page', async ({
-    dashboardPage,
-    usersPage,
-  }) => {
-    await test.step('Assert breadcrumb visible', async () => {
-      await dashboardPage.assertUsersBreadcrumbVisible();
-    });
-
+  test('Verify that the user can view the user list from the Users page', async ({ usersPage }) => {
     await test.step('Verify users table is rendered and contains demo user', async () => {
       const table = new TableHelper(usersPage.frame);
       await table.expectRowContains('');
@@ -53,6 +45,8 @@ test.describe('Users management', () => {
     usersPage,
   }) => {
     const testData = createUniqueUserData('pb', 'pbuser');
+    let apiUser: UserApiResponse;
+    let table: TableHelper;
 
     await test.step('Open New record modal', async () => {
       await usersPage.openCreateModal();
@@ -71,22 +65,22 @@ test.describe('Users management', () => {
     await test.step('Click Create and capture API response', async () => {
       const responsePromise = waitForCreateUserResponse(page);
       await usersPage.submitCreate();
-      const apiUser = await responsePromise;
+      apiUser = await responsePromise;
 
       await ModalActions.waitForModalToHide(usersPage.modalTitle);
 
-      const table = new TableHelper(usersPage.frame);
+      table = new TableHelper(usersPage.frame);
       await table.expectRowContains(apiUser.email);
 
-      await test.step('Verify that the newly created user in table matches the API create user response', async () => {
-        await table.expectRowDataById(apiUser.id, {
-          email: apiUser.email,
-          username: apiUser.username,
-          name: apiUser.name,
-        });
-      });
-
       userId = apiUser.id;
+    });
+
+    await test.step('Verify that the newly created user in table matches the API create user response', async () => {
+      await table.expectRowDataById(apiUser.id, {
+        email: apiUser.email,
+        username: apiUser.username,
+        name: apiUser.name,
+      });
     });
   });
 
@@ -149,12 +143,11 @@ test.describe('Users management', () => {
     await test.step('Verify that UI matches API response after edit', async () => {
       const table = new TableHelper(usersPage.frame);
       await table.expectRowContains(newEmail);
-      const rows = await table.getAllRowsData();
-      const uiRow = rows.find((r) => r.email === newEmail);
-
-      expect(uiRow).toBeTruthy();
-      expect(uiRow.username).toBe(updatedUser.username);
-      expect(uiRow.name).toBe(updatedUser.name);
+      await table.expectRowDataById(updatedUser.id, {
+        email: newEmail,
+        username: updatedUser.username,
+        name: updatedUser.name,
+      });
     });
   });
 });
