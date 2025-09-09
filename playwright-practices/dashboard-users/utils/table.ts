@@ -13,34 +13,46 @@ export interface UserRowData {
   updated: string;
 }
 
+type ColumnName = keyof UserRowData;
+type ColumnValueType = 'text' | 'boolean' | 'datetime';
+
+const columnConfig: Record<ColumnName, { type: ColumnValueType; emptyIfNA?: boolean }> = {
+  id: { type: 'text' },
+  email: { type: 'text' },
+  emailVisibility: { type: 'boolean' },
+  verified: { type: 'boolean' },
+  username: { type: 'text' },
+  name: { type: 'text', emptyIfNA: true },
+  avatar: { type: 'text' }, // avatar handled specially when fetching
+  website: { type: 'text', emptyIfNA: true },
+  created: { type: 'datetime' },
+  updated: { type: 'datetime' },
+};
+
 export class TableHelper {
   private readonly frame: FrameLocator;
+  private readonly table: Locator;
+  private readonly tableHeader: Locator;
+  private readonly tableBodyRows: Locator;
+  private readonly columnIndexCache: Map<string, number> = new Map();
 
   constructor(frame: FrameLocator) {
     this.frame = frame;
+    this.table = this.frame.getByRole('table');
+    this.tableHeader = this.table.locator('thead tr');
+    this.tableBodyRows = this.table.locator('tbody tr.row-handle');
   }
 
-  // Get table locator
   getTable(): Locator {
-    return this.frame.getByRole('table');
+    return this.table;
   }
 
   getTableHeader(): Locator {
-    return this.getTable().locator('thead tr');
+    return this.tableHeader;
   }
 
-  // Get table body rows
   getTableBodyRows(): Locator {
-    return this.getTable().locator('tbody tr.row-handle');
-  }
-
-  // Common helpers
-  getHeaderCheckbox(): Locator {
-    return this.getTableHeader().locator('.bulk-select-col input[type="checkbox"]');
-  }
-
-  getRowCheckbox(row: Locator): Locator {
-    return row.locator('.bulk-select-col input[type="checkbox"]');
+    return this.tableBodyRows;
   }
 
   async getCellText(row: Locator, selector: string, emptyIfNA = false): Promise<string> {
@@ -74,134 +86,124 @@ export class TableHelper {
     await copyButton.click();
   }
 
-  // Get specific row by index
   getRowByIndex(index: number): Locator {
     return this.getTableBodyRows().nth(index);
   }
 
-  // Get row by specific text content
+  private async getCellByRowAndColumnName(rowIndex: number, columnName: string): Promise<Locator> {
+    const columnIndex = await this.getColumnIndex(columnName);
+    const row = this.getRowByIndex(rowIndex);
+    return row.locator('td').nth(columnIndex);
+  }
+
+  private async getValueByRowAndColumnName(
+    rowIndex: number,
+    columnName: string,
+    options: { type: 'text' | 'boolean' | 'datetime'; emptyIfNA?: boolean } = { type: 'text' },
+  ): Promise<string | boolean> {
+    const cell = await this.getCellByRowAndColumnName(rowIndex, columnName);
+
+    if (options.type === 'boolean') {
+      const labelText = (await cell.locator('.label').textContent()) ?? '';
+      return labelText.toLowerCase() === 'true';
+    }
+
+    if (options.type === 'datetime') {
+      const date = (await cell.locator('.date').textContent()) ?? '';
+      const time = (await cell.locator('.time').textContent()) ?? '';
+      return `${date} ${time}`.trim();
+    }
+
+    await cell.scrollIntoViewIfNeeded();
+    const txtLocator = cell.locator('.txt');
+    const hintLocator = cell.locator('.txt-hint');
+    let value = '';
+    const hasTxt = (await txtLocator.count()) > 0;
+    if (hasTxt) {
+      value = (await txtLocator.first().textContent()) ?? '';
+    } else {
+      const hasHint = (await hintLocator.count()) > 0;
+      if (hasHint) {
+        value = (await hintLocator.first().textContent()) ?? '';
+      } else {
+        value = (await cell.innerText()) ?? '';
+      }
+    }
+    value = value.trim();
+    if (options.emptyIfNA && value === 'N/A') return '';
+    return value;
+  }
+
+  async getCellValueByRowIndex<T extends ColumnName>(
+    rowIndex: number,
+    columnName: T,
+  ): Promise<UserRowData[T]> {
+    if (columnName === 'avatar') {
+      const cell = await this.getCellByRowAndColumnName(rowIndex, 'avatar');
+      const hasImage = (await cell.locator('img').count()) > 0;
+      if (hasImage) {
+        const img = cell.locator('img');
+        return ((await img.getAttribute('src')) ?? '') as UserRowData[T];
+      }
+      const text = (await cell.locator('.txt-hint').textContent()) ?? '';
+      return (text === 'N/A' ? '' : text) as UserRowData[T];
+    }
+
+    const config = columnConfig[columnName];
+    const value = await this.getValueByRowAndColumnName(rowIndex, columnName, {
+      type: config.type,
+      emptyIfNA: config.emptyIfNA,
+    });
+    return value as UserRowData[T];
+  }
+
   getRowByText(text: string): Locator {
     return this.getTableBodyRows().filter({ hasText: text });
   }
 
-  // Get row by ID
   getRowById(id: string): Locator {
     return this.getTableBodyRows().filter({ hasText: id });
   }
 
-  // Generic: get row by column value
-  async getRowByValue(params: {
-    columnName: string;
-    value: string;
-    requireVisible?: boolean;
-  }): Promise<Locator> {
-    const { columnName, value, requireVisible } = params;
-
-    // Map columnName to column selector
-    const columnToSelector: Record<string, string> = {
-      id: '.col-field-id .txt',
-      email: '.col-field-email .txt',
-      emailVisibility: '.col-field-emailVisibility .label',
-      verified: '.col-field-verified .label',
-      username: '.col-field-username .txt',
-      name: '.col-field-name .txt, .col-field-name .txt-hint',
-      avatar: '.col-field-avatar',
-      website: '.col-field-website .txt, .col-field-website .txt-hint',
-      created: '.col-field-created .datetime',
-      updated: '.col-field-updated .datetime',
-    };
-
-    const selector = columnToSelector[columnName] ?? `.col-field-${columnName} .txt`;
-
-    // Build inner locator from the table to ensure correct scoping and types
-    const inner = this.getTable().locator(selector).filter({ hasText: value });
-
-    const row = this.getTableBodyRows().filter({ has: inner }).first();
-
-    if (requireVisible) {
-      await expect(row).toBeVisible();
-    }
-
-    return row;
-  }
-
-  // Checkbox operations
-  async selectRowByIndex(index: number): Promise<void> {
-    const row = this.getRowByIndex(index);
-    await this.getRowCheckbox(row).check();
-  }
-
-  async selectRowById(id: string): Promise<void> {
-    const row = this.getRowById(id);
-    await this.getRowCheckbox(row).check();
-  }
-
-  async selectAllRows(): Promise<void> {
-    await this.getHeaderCheckbox().check();
-  }
-
-  async unselectAllRows(): Promise<void> {
-    await this.getHeaderCheckbox().uncheck();
-  }
-
   // Column-specific getters
   async getIdByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    return this.getCellText(row, '.col-field-id .txt');
+    return this.getCellValueByRowIndex(index, 'id');
   }
 
   async getEmailByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    return this.getCellText(row, '.col-field-email .txt');
+    return this.getCellValueByRowIndex(index, 'email');
   }
 
   async getEmailVisibilityByRowIndex(index: number): Promise<boolean> {
-    const row = this.getRowByIndex(index);
-    return this.getLabelBoolean(row, '.col-field-emailVisibility .label');
+    return this.getCellValueByRowIndex(index, 'emailVisibility');
   }
 
   async getVerifiedByRowIndex(index: number): Promise<boolean> {
-    const row = this.getRowByIndex(index);
-    return this.getLabelBoolean(row, '.col-field-verified .label');
+    return this.getCellValueByRowIndex(index, 'verified');
   }
 
   async getUsernameByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    return this.getCellText(row, '.col-field-username .txt');
+    return this.getCellValueByRowIndex(index, 'username');
   }
 
   async getNameByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    // Support both normal text and hint (e.g., N/A) variants
-    return this.getCellText(row, '.col-field-name .txt, .col-field-name .txt-hint', true);
+    return this.getCellValueByRowIndex(index, 'name');
   }
 
   async getAvatarByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    const avatarElement = row.locator('.col-field-avatar');
-    const hasImage = (await avatarElement.locator('img').count()) > 0;
-    if (hasImage) {
-      const img = avatarElement.locator('img');
-      return (await img.getAttribute('src')) ?? '';
-    }
-    const text = (await avatarElement.locator('.txt-hint').textContent()) ?? '';
-    return text === 'N/A' ? '' : text;
+    return this.getCellValueByRowIndex(index, 'avatar');
   }
 
   async getWebsiteByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    // Support both normal text and hint (e.g., N/A) variants
-    return this.getCellText(row, '.col-field-website .txt, .col-field-website .txt-hint', true);
+    return this.getCellValueByRowIndex(index, 'website');
   }
 
   async getCreatedByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    return this.getDatetime(row, '.col-field-created .datetime');
+    return this.getCellValueByRowIndex(index, 'created');
   }
 
   async getUpdatedByRowIndex(index: number): Promise<string> {
-    const row = this.getRowByIndex(index);
-    return this.getDatetime(row, '.col-field-updated .datetime');
+    return this.getCellValueByRowIndex(index, 'updated');
   }
 
   // Get all data for a specific row
@@ -253,28 +255,6 @@ export class TableHelper {
   // Row count
   async getRowCount(): Promise<number> {
     return this.getTableBodyRows().count();
-  }
-
-  // Click action button (arrow) for a specific row
-  async clickActionButtonByIndex(index: number): Promise<void> {
-    const row = this.getRowByIndex(index);
-    await this.clickRowAction(row);
-  }
-
-  async clickActionButtonById(id: string): Promise<void> {
-    const row = this.getRowById(id);
-    await this.clickRowAction(row);
-  }
-
-  // Copy ID to clipboard
-  async copyIdToClipboardByIndex(index: number): Promise<void> {
-    const row = this.getRowByIndex(index);
-    await this.clickCopyId(row);
-  }
-
-  async copyIdToClipboardById(id: string): Promise<void> {
-    const row = this.getRowById(id);
-    await this.clickCopyId(row);
   }
 
   // Sorting operations
@@ -399,29 +379,59 @@ export class TableHelper {
   }
 
   async getColumnIndex(columnName: string): Promise<number> {
+    if (this.columnIndexCache.has(columnName)) {
+      return this.columnIndexCache.get(columnName)!;
+    }
     const headerCell = this.getColumn(columnName);
     await expect(headerCell).toBeVisible();
-    const index = await headerCell.evaluate((el) => (el as HTMLTableCellElement).cellIndex);
+    const index = await headerCell.evaluate((el) => (el as any).cellIndex);
+    this.columnIndexCache.set(columnName, index);
     return index;
+  }
+
+  // Optional: preload column indices once after the table is visible
+  async preloadColumnIndices(columnNames?: string[]): Promise<void> {
+    await this.waitForTableToLoad();
+    if (columnNames && columnNames.length > 0) {
+      for (const name of columnNames) {
+        if (!this.columnIndexCache.has(name)) {
+          const idx = await this.getColumnIndex(name);
+          this.columnIndexCache.set(name, idx);
+        }
+      }
+      return;
+    }
+
+    const headers = this.getTableHeader().locator('[title]');
+    const count = await headers.count();
+    for (let i = 0; i < count; i++) {
+      const h = headers.nth(i);
+      const name = await h.getAttribute('title');
+      if (name && !this.columnIndexCache.has(name)) {
+        const idx = await h.evaluate((el) => (el as any).cellIndex);
+        this.columnIndexCache.set(name, idx);
+      }
+    }
   }
 
   async getAllValueCellByColumnName(columnName: string): Promise<string[]> {
     const count = await this.getRowCount();
     const values: string[] = [];
-    const columnIndex = await this.getColumnIndex(columnName);
 
     for (let i = 0; i < count; i++) {
-      const row = this.getRowByIndex(i);
-      const cell = row.locator('td').nth(columnIndex);
-      let value = (await cell.innerText()).trim() ?? '';
-
-      if (columnName === 'emailVisibility') {
-        value = value.toLowerCase();
-      } else if (columnName === 'name' || columnName === 'website') {
-        value = value === 'N/A' ? '' : value;
+      if (columnName === 'avatar') {
+        const v = await this.getAvatarByRowIndex(i);
+        values.push(v);
+        continue;
       }
-
-      values.push(value);
+      const conf = columnConfig[columnName as ColumnName] ?? { type: 'text' };
+      const v = await this.getValueByRowAndColumnName(i, columnName, {
+        type: conf.type,
+        emptyIfNA: conf.emptyIfNA,
+      });
+      let asText = String(v ?? '');
+      if (columnName === 'emailVisibility') asText = asText.toLowerCase();
+      values.push(asText);
     }
 
     return values;
